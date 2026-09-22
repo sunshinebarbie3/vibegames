@@ -8,11 +8,7 @@ plugins {
 
 android {
     namespace = "com.vibe.app"
-    compileSdk {
-        version = release(36) {
-            minorApiLevel = 1
-        }
-    }
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.vibe.app"
@@ -24,8 +20,8 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
 
-        // PoE: the Android client talks to the ASP.NET Core API over HTTPS.
-        buildConfigField("String", "API_BASE_URL", "\"https://vibe-api.azurewebsites.net/\"")
+        // PoE: the Android client talks to the REST API over HTTPS.
+        buildConfigField("String", "API_BASE_URL", "\"https://api.vibeapp.com/\"")
         // When true the app runs against the bundled demo backend so the full
         // flow (groups, Decide For Us, memories, offline queue) can be shown
         // without a deployed API. Set to false to talk to API_BASE_URL.

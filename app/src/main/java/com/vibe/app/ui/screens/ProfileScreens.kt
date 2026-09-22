@@ -3,6 +3,7 @@
 package com.vibe.app.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -10,12 +11,16 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -62,6 +67,7 @@ import com.vibe.app.ui.components.VibeTopBar
 import com.vibe.app.ui.components.VibeBottomBar
 import com.vibe.app.ui.components.VibeTab
 import com.vibe.app.ui.components.onSelectTab
+import com.vibe.app.ui.theme.VibeCoral
 import com.vibe.app.ui.theme.VibeLilac
 import com.vibe.app.ui.theme.VibeMint
 import com.vibe.app.ui.vibeViewModel
@@ -244,16 +250,29 @@ fun ProfileScreen(
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
-        topBar = { VibeTopBar(title = stringResource(R.string.profile_title), onBack = onBack) },
+        topBar = {
+            VibeTopBar(
+                title = stringResource(R.string.profile_title),
+                onBack = onBack,
+                actions = {
+                    IconButton(onClick = onSettings) {
+                        Text("⚙️", fontSize = 20.sp)
+                    }
+                },
+            )
+        },
         bottomBar = {
             VibeBottomBar(
                 selected = VibeTab.PROFILE,
                 onSelect = { tab ->
-                    when (tab) {
-                        VibeTab.HOME -> onHome()
-                        VibeTab.MEMORIES -> onMemories()
-                        VibeTab.PROFILE -> Unit
-                    }
+                    onSelectTab(
+                        tab = tab,
+                        onHome = onHome,
+                        onActivities = onMyActivities,
+                        onGroups = onMyGroups,
+                        onProfile = {},
+                        onMemories = onMemories,
+                    )
                 },
             )
         },
@@ -264,24 +283,42 @@ fun ProfileScreen(
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                AvatarCircle(initials = profile?.displayName.orEmpty(), size = 64, highlight = true)
-                Column(modifier = Modifier.padding(start = 14.dp)) {
-                    Text(
-                        text = profile?.displayName ?: stringResource(R.string.state_loading),
-                        style = MaterialTheme.typography.headlineMedium,
-                    )
-                    Text(
-                        text = "@" + profile?.username.orEmpty(),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+            Box(contentAlignment = Alignment.BottomEnd) {
+                AvatarCircle(
+                    initials = profile?.displayName.orEmpty().ifBlank { "Lizzy" },
+                    size = 90,
+                    highlight = true,
+                )
+                Surface(
+                    shape = CircleShape,
+                    color = VibeCoral,
+                    modifier = Modifier.size(28.dp),
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text("📷", fontSize = 12.sp)
+                    }
                 }
             }
 
-            Spacer(modifier = Modifier.height(14.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Spacer(modifier = Modifier.height(10.dp))
+            Text(
+                text = profile?.displayName ?: "Lizzy 🌸",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+            )
+            Text(
+                text = "@" + (profile?.username.orEmpty().ifBlank { "lizzy_vibes" }),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+
+            Spacer(modifier = Modifier.height(18.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
                 StatTile(
                     label = stringResource(R.string.profile_stats_decisions),
                     value = stats.decisions.toString(),
@@ -299,43 +336,52 @@ fun ProfileScreen(
                 )
             }
 
-            SectionHeader(stringResource(R.string.settings_account))
-            LabelValueRow(
-                label = stringResource(R.string.profile_edit),
-                value = profile?.email.orEmpty(),
-                onClick = onEditProfile,
-            )
+            Spacer(modifier = Modifier.height(18.dp))
+            ProfileMenuItem("👤", stringResource(R.string.profile_edit), onClick = onEditProfile)
             Spacer(modifier = Modifier.height(8.dp))
-            LabelValueRow(
-                label = stringResource(R.string.profile_my_groups),
-                value = stringResource(R.string.groups_subtitle),
-                onClick = onMyGroups,
-            )
+            ProfileMenuItem("👥", stringResource(R.string.profile_my_groups), onClick = onMyGroups)
             Spacer(modifier = Modifier.height(8.dp))
-            LabelValueRow(
-                label = stringResource(R.string.profile_my_activities),
-                value = stringResource(R.string.activities_subtitle),
-                onClick = onMyActivities,
-            )
+            ProfileMenuItem("⭐", stringResource(R.string.profile_my_activities), onClick = onMyActivities)
             Spacer(modifier = Modifier.height(8.dp))
-            LabelValueRow(
-                label = stringResource(R.string.profile_settings),
-                value = stringResource(R.string.settings_subtitle),
-                onClick = onSettings,
-            )
+            ProfileMenuItem("⚙️", stringResource(R.string.profile_settings), onClick = onSettings)
             Spacer(modifier = Modifier.height(8.dp))
-            LabelValueRow(
-                label = stringResource(R.string.profile_language),
+            ProfileMenuItem(
+                "🌐",
+                stringResource(R.string.profile_language),
                 value = settings.language.label,
                 onClick = onLanguage,
             )
             Spacer(modifier = Modifier.height(8.dp))
-            LabelValueRow(
-                label = stringResource(R.string.profile_help),
-                value = stringResource(R.string.help_subtitle),
-                onClick = onHelp,
-            )
+            ProfileMenuItem("❓", stringResource(R.string.profile_help), onClick = onHelp)
             Spacer(modifier = Modifier.height(24.dp))
+        }
+    }
+}
+
+@Composable
+private fun ProfileMenuItem(
+    icon: String,
+    label: String,
+    value: String? = null,
+    onClick: () -> Unit,
+) {
+    VibeCard(onClick = onClick) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(text = icon, fontSize = 20.sp, modifier = Modifier.padding(end = 12.dp))
+            Text(
+                text = label,
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.weight(1f),
+            )
+            if (value != null) {
+                Text(
+                    text = value,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(end = 8.dp),
+                )
+            }
+            Text(text = "›", fontSize = 22.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }

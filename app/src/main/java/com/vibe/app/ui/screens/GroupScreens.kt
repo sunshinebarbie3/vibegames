@@ -187,8 +187,8 @@ fun GroupsScreen(
         topBar = { VibeTopBar(title = stringResource(R.string.groups_title), onBack = onBack) },
         bottomBar = {
             VibeBottomBar(
-                selected = VibeTab.HOME,
-                onSelect = { tab -> onSelectTab(tab, onHome, onMemories, onProfile) },
+                selected = VibeTab.GROUPS,
+                onSelect = { tab -> onSelectTab(tab, onHome = onHome, onMemories = onMemories, onProfile = onProfile) },
             )
         },
     ) { padding ->
@@ -497,8 +497,8 @@ fun GroupDetailScreen(
                             color = VibeLilac,
                         )
                         Spacer(modifier = Modifier.height(8.dp))
-                        if (group != null) {
-                            InviteActions(groupName = group.name, inviteCode = group.inviteCode)
+                        group?.let { g ->
+                            InviteActions(groupName = g.name, inviteCode = g.inviteCode)
                         }
                     }
                 }

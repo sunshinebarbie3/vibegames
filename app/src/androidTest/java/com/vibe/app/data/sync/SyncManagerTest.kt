@@ -117,7 +117,7 @@ class SyncManagerTest {
     }
 
     @Test
-    fun `an offline change is queued with the time it happened and drains when the API answers`() = runTest {
+    fun an_offline_change_is_queued_with_the_time_it_happened_and_drains_when_the_api_answers() = runTest {
         val queue = SyncQueue(database, moshi, time)
         val manager = SyncManager(demoApi(), database, FakeConnectivity(false), scope)
 
@@ -134,7 +134,7 @@ class SyncManagerTest {
     }
 
     @Test
-    fun `a conflict is reported and kept, not overwritten`() = runTest {
+    fun a_conflict_is_reported_and_kept_not_overwritten() = runTest {
         val queue = SyncQueue(database, moshi, time)
         val manager = SyncManager(ToggleApi(demoApi(), conflict = true), database, FakeConnectivity(false), scope)
 
@@ -151,7 +151,7 @@ class SyncManagerTest {
     }
 
     @Test
-    fun `a conflict can be resolved by keeping theirs or by keeping mine`() = runTest {
+    fun a_conflict_can_be_resolved_by_keeping_theirs_or_by_keeping_mine() = runTest {
         val queue = SyncQueue(database, moshi, time)
         val api = ToggleApi(demoApi(), conflict = true)
         val manager = SyncManager(api, database, FakeConnectivity(false), scope)
@@ -177,7 +177,7 @@ class SyncManagerTest {
     }
 
     @Test
-    fun `coming back online drains the queue without the member doing anything`() = runTest {
+    fun coming_back_online_drains_the_queue_without_the_member_doing_anything() = runTest {
         val queue = SyncQueue(database, moshi, time)
         val connectivity = FakeConnectivity(false)
         val manager = SyncManager(demoApi(), database, connectivity, scope)

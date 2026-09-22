@@ -336,11 +336,12 @@ fun MemoriesScreen(
             VibeBottomBar(
                 selected = VibeTab.MEMORIES,
                 onSelect = { tab ->
-                    when (tab) {
-                        VibeTab.HOME -> onHome()
-                        VibeTab.MEMORIES -> Unit
-                        VibeTab.PROFILE -> onProfile()
-                    }
+                    onSelectTab(
+                        tab = tab,
+                        onHome = onHome,
+                        onProfile = onProfile,
+                        onMemories = {},
+                    )
                 },
             )
         },

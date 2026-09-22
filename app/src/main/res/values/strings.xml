@@ -46,7 +46,6 @@
     <string name="link_to_register">Don\'t have an account? Sign up</string>
     <string name="forgot_password">Forgot your password?</string>
     <string name="continue_with_google">Continue with Google</string>
-    <string name="continue_with_microsoft">Continue with Microsoft</string>
     <string name="auth_or_divider">or</string>
     <string name="password_reset_help">We send a reset link to your email address. Ask an owner of your group for help if you no longer use that address.</string>
     <string name="password_reset_sent">Check your email for the reset link.</string>
@@ -237,7 +236,6 @@
     <string name="settings_password_detail">Keep your account and memories safe</string>
     <string name="settings_linked_accounts">Linked accounts</string>
     <string name="settings_linked_google">Google</string>
-    <string name="settings_linked_microsoft">Microsoft</string>
     <string name="settings_linked_connected">Connected</string>
     <string name="settings_linked_not_connected">Not connected</string>
     <string name="settings_sign_out">Sign out</string>

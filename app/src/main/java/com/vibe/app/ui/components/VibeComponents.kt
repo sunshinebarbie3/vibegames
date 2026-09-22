@@ -6,6 +6,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -23,6 +24,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
@@ -181,9 +183,23 @@ fun GroupRow(
     detail: String,
     onClick: () -> Unit,
 ) {
+    val bg = when {
+        name.contains("Friday") || icon.contains("🎉") -> VibeCoral.copy(alpha = 0.15f)
+        name.contains("Girls") || icon.contains("💖") -> VibeLilac.copy(alpha = 0.2f)
+        else -> VibeMint.copy(alpha = 0.2f)
+    }
     VibeCard(onClick = onClick) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(text = icon, fontSize = 28.sp, modifier = Modifier.width(44.dp))
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(bg),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(text = icon, fontSize = 22.sp)
+            }
+            Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(text = name, style = MaterialTheme.typography.titleMedium)
                 Text(
@@ -192,7 +208,7 @@ fun GroupRow(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            Text(text = "›", fontSize = 26.sp, color = MaterialTheme.colorScheme.secondary)
+            Text(text = "›", fontSize = 26.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
@@ -203,6 +219,7 @@ fun ActivityRow(
     icon: String,
     title: String,
     subtitle: String,
+    participantCount: Int? = null,
     statusLabel: String? = null,
     favourite: Boolean = false,
     onFavouriteToggle: (() -> Unit)? = null,
@@ -211,11 +228,20 @@ fun ActivityRow(
 ) {
     AnimatedVisibility(
         visible = !eliminated,
-        exit = slideOutHorizontally(initialOffsetX = { -it }) + fadeOut(),
+        exit = slideOutHorizontally(targetOffsetX = { -it }) + fadeOut(),
     ) {
         VibeCard(onClick = onClick) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(text = icon, fontSize = 26.sp, modifier = Modifier.width(40.dp))
+                Box(
+                    modifier = Modifier
+                        .size(42.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(text = icon, fontSize = 22.sp)
+                }
+                Spacer(modifier = Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(text = title, style = MaterialTheme.typography.titleMedium)
                     Text(
@@ -225,6 +251,20 @@ fun ActivityRow(
                     )
                     if (statusLabel != null) {
                         StatusPill(label = statusLabel)
+                    }
+                }
+                if (participantCount != null && participantCount > 0) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(horizontal = 6.dp),
+                    ) {
+                        Text(text = "👤", fontSize = 14.sp)
+                        Spacer(modifier = Modifier.width(2.dp))
+                        Text(
+                            text = participantCount.toString(),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
                     }
                 }
                 if (onFavouriteToggle != null) {
@@ -451,26 +491,50 @@ fun NotificationBell(unreadCount: Int, onClick: () -> Unit) {
     }
 }
 
-enum class VibeTab { HOME, MEMORIES, PROFILE }
+enum class VibeTab { HOME, ACTIVITIES, ADD, GROUPS, PROFILE, MEMORIES }
 
-/**
- * Shared behaviour for every bottom bar in the app.
- *
- * The three areas are always one tap apart while the member is browsing, and a tap on
- * the tab of the area you are already inside returns to that area's root - so Settings ->
- * Profile tab goes back to Profile, and Profile tab -> Profile tab does nothing. The
- * navigation itself is handled by the caller, which is what keeps this a pure helper.
- */
 fun onSelectTab(
     tab: VibeTab,
     onHome: () -> Unit,
-    onMemories: () -> Unit,
-    onProfile: () -> Unit,
+    onActivities: () -> Unit = {},
+    onGroups: () -> Unit = {},
+    onProfile: () -> Unit = {},
+    onMemories: () -> Unit = {},
+    onAdd: () -> Unit = {},
 ) {
     when (tab) {
         VibeTab.HOME -> onHome()
-        VibeTab.MEMORIES -> onMemories()
+        VibeTab.ACTIVITIES -> onActivities()
+        VibeTab.GROUPS -> onGroups()
         VibeTab.PROFILE -> onProfile()
+        VibeTab.MEMORIES -> onMemories()
+        VibeTab.ADD -> onAdd()
+    }
+}
+
+@Composable
+fun DottedOutlineButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(18.dp),
+        color = Color.Transparent,
+        border = BorderStroke(1.5.dp, VibeCoral.copy(alpha = 0.6f)),
+        modifier = modifier
+            .fillMaxWidth()
+            .height(50.dp),
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Text(
+                text = text,
+                style = MaterialTheme.typography.labelLarge,
+                color = VibeCoral,
+                fontWeight = FontWeight.Bold,
+            )
+        }
     }
 }
 
@@ -479,25 +543,57 @@ fun VibeBottomBar(
     selected: VibeTab,
     onSelect: (VibeTab) -> Unit,
 ) {
-    NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
+    NavigationBar(
+        containerColor = MaterialTheme.colorScheme.surface,
+        tonalElevation = 8.dp,
+    ) {
         NavigationBarItem(
             selected = selected == VibeTab.HOME,
             onClick = { onSelect(VibeTab.HOME) },
-            icon = { Icon(Icons.Filled.Home, contentDescription = stringResource(R.string.cd_nav_home)) },
+            icon = { Text(text = "🏠", fontSize = 18.sp) },
             label = { Text(stringResource(R.string.cd_nav_home)) },
             colors = vibeNavColors(),
         )
         NavigationBarItem(
-            selected = selected == VibeTab.MEMORIES,
-            onClick = { onSelect(VibeTab.MEMORIES) },
-            icon = { Icon(Icons.Filled.Star, contentDescription = stringResource(R.string.cd_nav_memories)) },
-            label = { Text(stringResource(R.string.cd_nav_memories)) },
+            selected = selected == VibeTab.ACTIVITIES,
+            onClick = { onSelect(VibeTab.ACTIVITIES) },
+            icon = { Text(text = "📋", fontSize = 18.sp) },
+            label = { Text(stringResource(R.string.cd_nav_activities)) },
+            colors = vibeNavColors(),
+        )
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .clickable { onSelect(VibeTab.ADD) },
+            contentAlignment = Alignment.Center,
+        ) {
+            Surface(
+                shape = CircleShape,
+                color = VibeCoral,
+                modifier = Modifier.size(46.dp),
+                shadowElevation = 4.dp,
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = Icons.Filled.Add,
+                        contentDescription = stringResource(R.string.cd_add),
+                        tint = Color.White,
+                        modifier = Modifier.size(26.dp),
+                    )
+                }
+            }
+        }
+        NavigationBarItem(
+            selected = selected == VibeTab.GROUPS,
+            onClick = { onSelect(VibeTab.GROUPS) },
+            icon = { Text(text = "👥", fontSize = 18.sp) },
+            label = { Text(stringResource(R.string.cd_nav_groups)) },
             colors = vibeNavColors(),
         )
         NavigationBarItem(
             selected = selected == VibeTab.PROFILE,
             onClick = { onSelect(VibeTab.PROFILE) },
-            icon = { Icon(Icons.Filled.Person, contentDescription = stringResource(R.string.cd_nav_profile)) },
+            icon = { Text(text = "👤", fontSize = 18.sp) },
             label = { Text(stringResource(R.string.cd_nav_profile)) },
             colors = vibeNavColors(),
         )

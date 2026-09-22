@@ -19,6 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -208,33 +209,38 @@ fun ActivitiesScreen(
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
-        topBar = { VibeTopBar(title = stringResource(R.string.activities_title), onBack = onBack) },
-        bottomBar = {
-            VibeBottomBar(
-                selected = VibeTab.HOME,
-                onSelect = { tab -> onSelectTab(tab, onHome, onMemories, onProfile) },
+        topBar = {
+            VibeTopBar(
+                title = stringResource(R.string.activities_title),
+                onBack = onBack,
+                actions = {
+                    IconButton(onClick = onAddActivity) {
+                        Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.cd_add), tint = VibeCoral)
+                    }
+                },
             )
         },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = onAddActivity,
-                containerColor = VibeCoral,
-                contentColor = Color.White,
-            ) {
-                Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.cd_add))
-            }
+        bottomBar = {
+            VibeBottomBar(
+                selected = VibeTab.ACTIVITIES,
+                onSelect = { tab ->
+                    onSelectTab(
+                        tab = tab,
+                        onHome = onHome,
+                        onActivities = {},
+                        onProfile = onProfile,
+                        onMemories = onMemories,
+                        onAdd = onAddActivity,
+                    )
+                },
+            )
         },
     ) { padding ->
         LazyColumn(modifier = Modifier.fillMaxSize().padding(padding).padding(horizontal = 16.dp)) {
             item {
-                Text(
-                    text = stringResource(R.string.activities_subtitle),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(bottom = 12.dp),
-                )
+                Spacer(modifier = Modifier.height(8.dp))
                 filterRow(viewModel.filter) { viewModel.selectFilter(it) }
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(14.dp))
             }
             if (activities.isEmpty()) {
                 item {
@@ -255,6 +261,7 @@ fun ActivitiesScreen(
                         } else {
                             stringResource(R.string.activity_added_by, activity.createdByName)
                         },
+                        participantCount = activity.participantCount,
                         favourite = activity.favourite,
                         onFavouriteToggle = { viewModel.toggleFavourite(activity) },
                         onClick = { onOpenActivity(activity.id) },

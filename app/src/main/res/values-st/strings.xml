@@ -44,7 +44,6 @@
     <string name="link_to_register">Ha o na akhaonto? Ingodise</string>
     <string name="forgot_password">O lebetse phasewete ya hao?</string>
     <string name="continue_with_google">Tswela pele ka Google</string>
-    <string name="continue_with_microsoft">Tswela pele ka Microsoft</string>
     <string name="auth_or_divider">kapa</string>
 
     <string name="error_name_required">Ka kopo kenya lebitso la hao le bontshwang.</string>
@@ -337,7 +336,6 @@
     <string name="quick_create_group_body">Qala lenane le letjha le batho ba hao</string>
     <string name="quick_start_decision_body">Bula dipotoloho tsa E/TJHE bakeng sa sehlopha</string>
     <string name="settings_linked_connected">E hokahane</string>
-    <string name="settings_linked_microsoft">Microsoft</string>
     <string name="settings_privacy_invite">Batho bao ke ba memelang feela</string>
     <string name="sync_state_conflict">Kgohlano</string>
     <string name="sync_state_pending">E emetse</string>

@@ -204,7 +204,7 @@ class DecisionEngineTest {
         assertEquals(1, pizza.yes)
         assertEquals(1, pizza.no)
         assertEquals(1, pizza.pending)
-        assertTrue(pizza.canProgress)
+        assertTrue(pizza.couldStillWin)
     }
 
     @Test

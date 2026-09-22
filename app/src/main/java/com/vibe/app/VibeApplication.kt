@@ -15,9 +15,12 @@ import kotlinx.coroutines.launch
  */
 class VibeApplication : Application() {
 
+    lateinit var container: VibeContainer
+        private set
+
     override fun onCreate() {
         super.onCreate()
-        val container = VibeContainer.provide(this)
+        container = VibeContainer.provide(this)
         container.appScope.launch { container.syncManager.syncNow() }
     }
 }

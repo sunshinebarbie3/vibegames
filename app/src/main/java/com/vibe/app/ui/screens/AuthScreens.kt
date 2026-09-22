@@ -301,17 +301,7 @@ fun LoginScreen(onSignedIn: () -> Unit, onGoToRegister: () -> Unit) {
         ) {
             viewModel.signInWithGoogle(onSignedIn)
         }
-        Spacer(modifier = Modifier.height(10.dp))
-        // Microsoft Entra ID needs an app registration; the route is visible here
-        // and docs/SETUP.md explains the wiring, so the button never lies about
-        // what it can do yet.
-        SsoButton(
-            badge = "M",
-            badgeColor = VibeLilac,
-            label = stringResource(R.string.continue_with_microsoft),
-            enabled = false,
-            onClick = {},
-        )
+        Spacer(modifier = Modifier.height(12.dp))
 
         TextButton(onClick = onGoToRegister) {
             Text(
@@ -413,11 +403,13 @@ private fun EmailField(value: String, onValueChange: (String) -> Unit) {
         value = value,
         onValueChange = onValueChange,
         label = { Text(stringResource(R.string.field_email)) },
+        leadingIcon = { Text(text = "✉️", fontSize = 18.sp) },
         singleLine = true,
         keyboardOptions = KeyboardOptions(
             keyboardType = KeyboardType.Email,
             imeAction = ImeAction.Next,
         ),
+        shape = MaterialTheme.shapes.medium,
         modifier = Modifier.fillMaxWidth(),
     )
     Spacer(modifier = Modifier.height(10.dp))
@@ -435,6 +427,7 @@ private fun PasswordField(
         value = value,
         onValueChange = onValueChange,
         label = { Text(label) },
+        leadingIcon = { Text(text = "🔒", fontSize = 18.sp) },
         singleLine = true,
         visualTransformation = if (visible) VisualTransformation.None else PasswordVisualTransformation(),
         keyboardOptions = KeyboardOptions(
@@ -448,6 +441,7 @@ private fun PasswordField(
                 Text(text = if (visible) "🙈" else "👁", fontSize = 18.sp)
             }
         },
+        shape = MaterialTheme.shapes.medium,
         modifier = Modifier.fillMaxWidth(),
     )
     Spacer(modifier = Modifier.height(10.dp))

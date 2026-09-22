@@ -44,7 +44,6 @@
     <string name="link_to_register">Awunayo i-akhawunti? Bhalisa</string>
     <string name="forgot_password">Ukhohlwe iphasiwedi?</string>
     <string name="continue_with_google">Qhubeka nge-Google</string>
-    <string name="continue_with_microsoft">Qhubeka nge-Microsoft</string>
     <string name="auth_or_divider">noma</string>
 
     <string name="error_name_required">Sicela ufake igama lakho eliboniswayo.</string>
@@ -337,7 +336,6 @@
     <string name="quick_create_group_body">Qala uhlu olusha nabantu bakho</string>
     <string name="quick_start_decision_body">Vula imizuliswano ka-YEBO/CHA yeqembu</string>
     <string name="settings_linked_connected">Kuxhunyiwe</string>
-    <string name="settings_linked_microsoft">Microsoft</string>
     <string name="settings_privacy_invite">Kuphela abantu engibamemayo</string>
     <string name="sync_state_conflict">Ukungqubuzana</string>
     <string name="sync_state_pending">Kulindile</string>

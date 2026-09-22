@@ -1,6 +1,6 @@
 package com.vibe.app.data.sync
 
-import com.vibe.app.core.ApiErrorKind
+import com.vibe.app.data.remote.ApiErrorKind
 import com.vibe.app.core.ConnectivityObserver
 import com.vibe.app.core.VibeResult
 import com.vibe.app.data.local.SyncItemEntity

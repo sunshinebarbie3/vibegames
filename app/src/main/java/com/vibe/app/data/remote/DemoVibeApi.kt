@@ -72,8 +72,8 @@ class DemoVibeApi(
 
     companion object {
         const val DEMO_USER_ID = "demo-user-0001"
-        const val DEMO_DISPLAY_NAME = "Lerato"
-        const val DEMO_EMAIL = "lerato@vibe.app"
+        const val DEMO_DISPLAY_NAME = "Lizzy 🌸"
+        const val DEMO_EMAIL = "lizzy@vibe.app"
         const val SIMULATED_VOTE_DELAY_MS = 1_600L
         private const val ROUND_DEADLINE_HOURS = 24L
     }
@@ -519,10 +519,10 @@ class DemoVibeApi(
     private fun demoUserEntity() = UserEntity(
         id = DEMO_USER_ID,
         displayName = DEMO_DISPLAY_NAME,
-        username = "lerato",
+        username = "lizzy_vibes",
         email = DEMO_EMAIL,
         language = "en",
-        themeMode = "DARK",
+        themeMode = "LIGHT",
         notificationsEnabled = true,
         privacyMembersOnly = true,
         photoUri = null,
@@ -657,22 +657,23 @@ class DemoVibeApi(
         )
     }
 
-    private suspend fun settle(decision: DecisionEntity, evaluation: RoundEvaluation = evaluate(decision)): DecisionEntity {
+    private suspend fun settle(decision: DecisionEntity, evaluation: RoundEvaluation? = null): DecisionEntity {
+        val eval = evaluation ?: evaluate(decision)
         val now = time.nowMillis()
         val roundIds = Codecs.decodeList(decision.roundActivityIdsCsv)
         fun settled(state: DecisionState, winner: String?) = decision.copy(
             state = state.name,
             winnerActivityId = winner,
-            talliesCsv = Codecs.encodeTallies(evaluation.tallies),
-            survivorIdsCsv = Codecs.encodeList(evaluation.survivorIds),
-            eliminatedIdsCsv = Codecs.encodeList(evaluation.eliminatedIds),
+            talliesCsv = Codecs.encodeTallies(eval.tallies),
+            survivorIdsCsv = Codecs.encodeList(eval.survivorIds),
+            eliminatedIdsCsv = Codecs.encodeList(eval.eliminatedIds),
             roundActivityIdsCsv = Codecs.encodeList(roundIds),
         )
 
-        return when (val outcome = evaluation.outcome) {
+        return when (val outcome = eval.outcome) {
             is RoundOutcome.Winner -> {
                 db.activityDao().updateStatus(outcome.activityId, ActivityStatus.WINNER.name)
-                evaluation.eliminatedIds.forEach { db.activityDao().updateStatus(it, ActivityStatus.ELIMINATED.name) }
+                eval.eliminatedIds.forEach { db.activityDao().updateStatus(it, ActivityStatus.ELIMINATED.name) }
                 val updated = settled(DecisionState.SETTLED, outcome.activityId)
                 db.decisionDao().upsert(updated)
                 val title = db.activityDao().byId(outcome.activityId)?.title ?: "your plan"
@@ -687,7 +688,7 @@ class DemoVibeApi(
             }
 
             is RoundOutcome.ContinueRounds -> {
-                evaluation.eliminatedIds.forEach { db.activityDao().updateStatus(it, ActivityStatus.ELIMINATED.name) }
+                eval.eliminatedIds.forEach { db.activityDao().updateStatus(it, ActivityStatus.ELIMINATED.name) }
                 outcome.survivorIds.forEach { db.activityDao().updateStatus(it, ActivityStatus.ACTIVE.name) }
                 db.decisionDao().upsert(settled(DecisionState.CLOSED, null))
                 val next = DecisionEntity(
@@ -701,7 +702,7 @@ class DemoVibeApi(
                     startedAt = now,
                     talliesCsv = "",
                     survivorIdsCsv = Codecs.encodeList(outcome.survivorIds),
-                    eliminatedIdsCsv = Codecs.encodeList(evaluation.eliminatedIds),
+                    eliminatedIdsCsv = Codecs.encodeList(eval.eliminatedIds),
                     roundActivityIdsCsv = Codecs.encodeList(outcome.survivorIds),
                 )
                 db.decisionDao().upsert(next)
@@ -716,7 +717,7 @@ class DemoVibeApi(
             }
 
             is RoundOutcome.Tie, is RoundOutcome.NoWinner -> {
-                evaluation.eliminatedIds.forEach { db.activityDao().updateStatus(it, ActivityStatus.ELIMINATED.name) }
+                eval.eliminatedIds.forEach { db.activityDao().updateStatus(it, ActivityStatus.ELIMINATED.name) }
                 val updated = settled(DecisionState.CLOSED, null)
                 db.decisionDao().upsert(updated)
                 notifyMembers(

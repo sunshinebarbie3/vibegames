@@ -6,6 +6,7 @@ import com.vibe.app.core.toProblem
 import com.vibe.app.data.local.NotificationEntity
 import com.vibe.app.data.local.VibeDatabase
 import com.vibe.app.data.local.toDomain
+import com.vibe.app.data.local.toEntity
 import com.vibe.app.data.prefs.SettingsStore
 import com.vibe.app.data.remote.ApiResult
 import com.vibe.app.data.remote.RegisterDeviceRequest
