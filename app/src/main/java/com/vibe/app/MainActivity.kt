@@ -9,13 +9,14 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import androidx.lifecycle.Lifecycle
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import com.vibe.app.core.LocaleManager
 import com.vibe.app.databinding.ActivityMainBinding
 import com.vibe.app.domain.ThemeMode
 import com.vibe.app.notifications.VibeMessagingService
-import com.vibe.app.ui.collect
 import com.vibe.app.ui.viewmodel.VibeViewModel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -60,9 +61,14 @@ class MainActivity : AppCompatActivity() {
             nav.graph = graph; ready = true
             handleIntent(intent)
         }
-        collect(vm.settings) { applyTheme(it.themeMode); LocaleManager.apply(it.language) }
-        collect(vm.session) { if (ready && it == null && nav.currentDestination?.id !in setOf(R.id.loginFragment, R.id.onboardingFragment)) openRoot(R.id.loginFragment) }
-        collect(vm.online) { updateBanner() }; collect(vm.pending) { updateBanner() }
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                launch { vm.settings.collect { applyTheme(it.themeMode); LocaleManager.apply(it.language) } }
+                launch { vm.session.collect { if (ready && it == null && nav.currentDestination?.id !in setOf(R.id.loginFragment, R.id.onboardingFragment)) openRoot(R.id.loginFragment) } }
+                launch { vm.online.collect { updateBanner() } }
+                launch { vm.pending.collect { updateBanner() } }
+            }
+        }
         binding.offlineBanner.setOnClickListener { if (ready) nav.navigate(R.id.settingsFragment) }
     }
     private fun applyTheme(theme: ThemeMode) {
