@@ -13,7 +13,7 @@
         <item name="android:navigationBarColor">@color/canvas</item>
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:fontFamily">sans</item>
-        <item name="materialButtonStyle">@style/Vibe.Button</item>
-        <item name="textInputStyle">@style/Vibe.Input</item>
+        <item name="materialButtonStyle">@style/VibeButton</item>
+        <item name="textInputStyle">@style/VibeInput</item>
     </style>
 </resources>
