@@ -51,12 +51,12 @@ jobs:
               else:
                   print('::error::Kotlin build log excerpt: '+' | '.join(section[-80:]).replace('%','%25').replace('\r',' ').replace('\n',' '))
           from pathlib import Path
-          daemon_logs=list(Path.home().glob('.kotlin/daemon/*.log'))+list(Path.home().glob('.gradle/daemon/*/*.out.log'))
-          for log in daemon_logs[-8:]:
+          daemon_logs=list(Path.home().glob('.kotlin/daemon/*'))+list(Path.home().glob('.gradle/daemon/*/*.out.log'))
+          for log in daemon_logs[-12:]:
               try:
                   text=log.read_text(errors='replace').splitlines()
-                  clues=[x.strip() for x in text if re.search(r'(Kotlin|compiler|daemon|exception|outofmemory|error|failed|caused by)',x,re.I)]
-                  if clues: print('::error::Daemon diagnostic '+str(log.name)+': '+' | '.join(clues[-12:]).replace('%','%25'))
+                  clues=[x.strip() for x in text if re.search(r'(Caused by:|Exception|OutOfMemory|Kotlin.*(error|fail)|compiler.*(error|fail)|Compilation error)',x,re.I)]
+                  if clues: print('::error::Daemon diagnostic '+str(log.name)+': '+' | '.join(clues[-24:]).replace('%','%25'))
               except Exception: pass
           start=max((i for i,s in enumerate(lines) if s.strip()=='* What went wrong:'),default=-1)
           if start >= 0:
