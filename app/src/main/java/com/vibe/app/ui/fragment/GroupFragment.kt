@@ -24,14 +24,15 @@ class GroupFragment : Fragment(R.layout.fragment_detail) {
         var filter = "all"
         val adapter = CardAdapter { navigate(R.id.activityFragment, "entityId" to it.id) }
         b.list.layoutManager = LinearLayoutManager(requireContext()); b.list.adapter = adapter
-        for ((tag, label) in listOf("all" to R.string.group_filter_all, "favourites" to R.string.group_filter_favourites, "suggested" to R.string.group_filter_suggested, "completed" to R.string.group_filter_completed)) {
-            val chip = Chip(requireContext()).apply { text = getString(label); isCheckable = true; isChecked = tag == "all"; setOnClickListener { filter = tag; b.filters.children.forEach { (it as Chip).isChecked = it == this }; render() } }
-            b.filters.addView(chip)
-        }
         fun render() {
             val rows = vm.activities.value.filter { it.groupId == id }.filter { when (filter) { "favourites" -> it.favourite; "completed" -> it.status == ActivityStatus.COMPLETED; "suggested" -> it.status == ActivityStatus.SUGGESTED; else -> true } }
             adapter.submitList(rows.map { CardItem(it.id, it.icon, it.title, getString(R.string.activity_added_by, it.createdByName), if (it.favourite) "★" else if (it.status == ActivityStatus.COMPLETED) "✓" else "") })
         }
+        for ((tag, label) in listOf("all" to R.string.group_filter_all, "favourites" to R.string.group_filter_favourites, "suggested" to R.string.group_filter_suggested, "completed" to R.string.group_filter_completed)) {
+            val chip = Chip(requireContext()).apply { text = getString(label); isCheckable = true; isChecked = tag == "all"; setOnClickListener { filter = tag; b.filters.children.forEach { (it as Chip).isChecked = it == this }; render() } }
+            b.filters.addView(chip)
+        }
+
         collect(combine(vm.group(id), vm.activities) { g, _ -> g }) { g ->
             g ?: return@collect
             b.icon.text = g.icon; b.heading.text = g.name

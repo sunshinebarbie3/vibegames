@@ -11,6 +11,7 @@ import com.vibe.app.ui.*
 import com.vibe.app.ui.viewmodel.VibeViewModel
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.flowOf
 import java.text.DateFormat
 
