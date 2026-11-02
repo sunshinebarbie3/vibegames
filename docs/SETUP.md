@@ -40,7 +40,7 @@ The original repository default `https://api.vibeapp.com/` is preserved, but is 
 
 ## 3. Deploy the REST API to Cloud Run
 
-Install Node.js 22+, Google Cloud CLI and Firebase CLI. Select a Google Cloud project linked to the Firebase project, enable Cloud Run, Cloud Build, Firestore, Firebase Authentication, Cloud Storage and FCM APIs, and create a runtime service account. Give it only the project roles required to administer Firebase Auth, read/write Firestore, read/write Cloud Storage objects, and send FCM messages. Use Secret Manager for the Firebase web key and Google web client ID; do not commit `.env` or service-account files.
+Install Node.js 22+, Google Cloud CLI and Firebase CLI. Select a Google Cloud project linked to the Firebase project, enable Cloud Run, Cloud Build, Firestore, Firebase Authentication, Cloud Storage and FCM APIs, and create a runtime service account. Give it the least-privilege IAM roles for Firebase Authentication administration, Firestore data access, Cloud Storage object access, and Firebase Cloud Messaging. Verify the specific predefined roles against the APIs enabled in your project. Use Secret Manager for the Firebase web key and Google web client ID; do not commit `.env` or service-account files.
 
 For local API tests, create an untracked `server/.env` from `server/.env.example` and use Application Default Credentials (`gcloud auth application-default login`). For deployment, attach the runtime service account to Cloud Run and use the following environment variables:
 

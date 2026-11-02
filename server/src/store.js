@@ -1,6 +1,7 @@
 import { randomUUID, createHash } from 'node:crypto';
 import { ApiError, assert, idValid } from './errors.js';
 import { evaluate, publicDecision } from './domain.js';
+import { notificationCopy } from './notification-copy.js';
 
 export const now = () => Date.now();
 export const hash = value => createHash('sha256').update(value).digest('hex');
@@ -175,7 +176,8 @@ export class VibeStore {
     for (const uid of g.memberIds.filter(id => id !== excludeUid)) {
       const u = await this.get('users', uid); if (!u?.notificationsEnabled) continue;
       const id = randomUUID();
-      const n = { id, userId: uid, groupId, type, title: 'VIBE', body, read: false, createdAtEpochMillis: now(), pushPending: true };
+      const copy = notificationCopy(u.language, type);
+      const n = { id, userId: uid, groupId, type, title: copy.title, body: copy.body, read: false, createdAtEpochMillis: now(), pushPending: true };
       await this.put('notifications', id, n);
       try { await this.push(n); } catch (e) { console.error('Push delivery failed; inbox preserved:', e.code || e.name); }
     }
@@ -185,7 +187,7 @@ export class VibeStore {
     if (!devices.length) return;
     for (let offset=0;offset<devices.length;offset+=500) {
       const batch=devices.slice(offset,offset+500);
-      const result = await this.s.messaging.sendEachForMulticast({ tokens: batch.map(d => d.id), data: { id: n.id, type: n.type, groupId: n.groupId || '', title: n.title, body: n.body } });
+      const result = await this.s.messaging.sendEachForMulticast({ tokens: batch.map(d => d.token), data: { id: n.id, type: n.type, groupId: n.groupId || '', title: n.title, body: n.body } });
       await Promise.all(result.responses.map(async (r, i) => { if (!r.success && ['messaging/registration-token-not-registered', 'messaging/invalid-registration-token'].includes(r.error?.code)) await this.ref('devices', batch[i].id).delete(); }));
     }
     await this.put('notifications', n.id, { pushPending: false });

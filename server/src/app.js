@@ -139,9 +139,10 @@ export function createApp(services, env = process.env) {
   app.post('/api/v1/notifications/:id/read', route(async (req, res) => { const n = await store.get('notifications', paramId(req)); assert(n?.userId === req.uid, 404, 'Notification not found.'); await store.put('notifications', n.id, { read: true }); res.status(204).end(); }));
   app.post('/api/v1/devices/register', route(async (req, res) => {
     const p = z.object({ fcmToken: z.string().min(20).max(4096), platform: z.literal('android') }).parse(req.body);
-    await store.put('devices', p.fcmToken, { id: p.fcmToken, userId: req.uid, platform: p.platform, updatedAtEpochMillis: now() }); res.status(204).end();
+    const deviceId = (await import('node:crypto')).createHash('sha256').update(p.fcmToken).digest('hex');
+    await store.put('devices', deviceId, { id: deviceId, token: p.fcmToken, userId: req.uid, platform: p.platform, updatedAtEpochMillis: now() }); res.status(204).end();
   }));
-  app.post('/api/v1/devices/unregister', route(async (req, res) => { const p = z.object({ fcmToken: z.string().min(20).max(4096) }).parse(req.body); const d = await store.get('devices', p.fcmToken); if (d?.userId === req.uid) await store.ref('devices', d.id).delete(); res.status(204).end(); }));
+  app.post('/api/v1/devices/unregister', route(async (req, res) => { const p = z.object({ fcmToken: z.string().min(20).max(4096) }).parse(req.body); const deviceId = (await import('node:crypto')).createHash('sha256').update(p.fcmToken).digest('hex'); const d = await store.get('devices', deviceId); if (d?.userId === req.uid) await store.ref('devices', d.id).delete(); res.status(204).end(); }));
 
   const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024, files: 1 } });
   app.post('/api/v1/media', upload.single('photo'), route(async (req, res) => {

@@ -62,7 +62,6 @@ class VibeContainer private constructor(private val context: Context) {
         val groups = database.groupDao().all()
         for (group in groups) {
             // Never clobber locally queued changes during a background refresh.
-            val pending = database.syncQueueDao().all()
             activityRepository.refresh(group.id)
             memoryRepository.refreshPlans(group.id)
             memoryRepository.refreshMemories(group.id)

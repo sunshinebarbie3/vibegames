@@ -25,3 +25,11 @@ test('deadline and nonparticipants cannot create extra votes', () => {
   const e=evaluate({activities:ideas,memberIds:['a','b'],deadline:100,now:101,votes:[vote('pizza','a',true),vote('pizza','ghost',true),vote('pizza','a',false)]});
   assert.equal(e.votesRevealed,true); assert.equal(e.tallies[0].yes,0); assert.equal(e.tallies[0].no,1); assert.equal(e.tallies[0].pending,1);
 });
+
+test('notification messages use the member selected South African language', async () => {
+  const { notificationCopy } = await import('../src/notification-copy.js');
+  assert.match(notificationCopy('zu','WINNER').title,/ophumelele/);
+  assert.match(notificationCopy('st','NEW_ACTIVITY').title,/Mohopolo/);
+  assert.match(notificationCopy('en','MEMORY').body,/Photos/);
+  assert.match(notificationCopy('unsupported','DEADLINE').title,/Vote/);
+});
