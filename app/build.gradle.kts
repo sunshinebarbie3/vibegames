@@ -117,4 +117,4 @@ tasks.register("preflightRelease") {
         check(errors.isEmpty()) { errors.joinToString("\n") }
     }
 }
-tasks.named("bundleRelease") { dependsOn("preflightRelease") }
+tasks.matching { it.name == "bundleRelease" }.configureEach { dependsOn("preflightRelease") }
