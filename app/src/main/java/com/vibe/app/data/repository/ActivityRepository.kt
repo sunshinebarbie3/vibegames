@@ -150,7 +150,7 @@ class ActivityRepository(
                 VibeResult.Ok(saved)
             }
 
-            is ApiResult.Failure -> if (result.kind == ApiErrorKind.NETWORK) {
+            is ApiResult.Failure -> if (result.kind == ApiErrorKind.NETWORK || result.kind == ApiErrorKind.SERVER) {
                 VibeResult.Ok(updated)
             } else {
                 result.toProblem()
@@ -178,7 +178,7 @@ class ActivityRepository(
         val queued = queue.enqueue(SyncAction.DELETE_ACTIVITY, activityId, payload, UpsertActivityRequest::class.java)
         return when (val result = com.vibe.app.data.sync.onlineMutation(queue, queued) { api.deleteActivity(activityId) }) {
             is ApiResult.Success -> VibeResult.Ok(Unit)
-            is ApiResult.Failure -> if (result.kind == ApiErrorKind.NETWORK) {
+            is ApiResult.Failure -> if (result.kind == ApiErrorKind.NETWORK || result.kind == ApiErrorKind.SERVER) {
                 queuedOfflineResult()
             } else {
                 result.toProblem()

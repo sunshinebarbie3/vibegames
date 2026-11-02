@@ -40,7 +40,9 @@ jobs:
           from pathlib import Path
           p=Path('android-build.log')
           lines=p.read_text().splitlines() if p.exists() else ['Android build log missing']
-          for s in lines[-160:]: print('::error::'+s.replace('%','%25').replace('\r','%0D').replace('\n','%0A'))
+          import re
+          matched=[s for s in lines if re.search(r'^(e: |FAILURE:|\* What went wrong:|Could not |Build file |  Line |Execution failed|> Task .* FAILED|Error:)',s)]
+          for s in (matched or lines[:80]): print('::error::'+s.replace('%','%25').replace('\r','%0D').replace('\n','%0A'))
           PY
       - uses: actions/upload-artifact@v4
         if: always()

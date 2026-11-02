@@ -70,7 +70,7 @@ class DecisionEngineTest {
     }
 
     @Test
-    fun `the option with more yes than no wins once everyone voted`() {
+    fun `the option with more yes than no wins once everyone votes on every idea`() {
         val evaluation = DecisionEngine.evaluate(
             round(
                 votes = listOf(
@@ -188,7 +188,7 @@ class DecisionEngineTest {
     }
 
     @Test
-    fun `a member who skips an activity leaves that option pending for them`() {
+    fun `one incomplete ballot does not end the round and leaves that idea pending`() {
         val evaluation = DecisionEngine.evaluate(
             round(
                 votes = listOf(
@@ -205,6 +205,9 @@ class DecisionEngineTest {
         assertEquals(1, pizza.no)
         assertEquals(1, pizza.pending)
         assertTrue(pizza.couldStillWin)
+        assertFalse(evaluation.votesRevealed)
+        assertEquals(0, evaluation.participation.votedCount)
+        assertEquals(3, evaluation.participation.pendingMemberIds.size)
     }
 
     @Test

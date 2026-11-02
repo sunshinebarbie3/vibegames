@@ -14,9 +14,12 @@ export function evaluate({ activities, memberIds, votes = [], roundNumber = 1, s
     const pending = members.length - cast.length;
     return { activityId: a.id, yes, no, pending, canProgress: yes > no, couldStillWin: yes + pending > no };
   });
-  const voters = new Set(votes.filter(v => members.includes(v.userId) && eligible.some(a => a.id === v.activityId)).map(v => v.userId));
-  const participation = { memberCount: members.length, votedCount: voters.size, pendingMemberIds: members.filter(id => !voters.has(id)) };
-  const complete = state !== 'OPEN' || (members.length > 0 && voters.size >= members.length) || (deadline !== null && now >= deadline);
+  const activityIds = new Set(eligible.map(a => a.id));
+  const votesByMember = new Map();
+  for (const v of votes) if (members.includes(v.userId) && activityIds.has(v.activityId)) { if (!votesByMember.has(v.userId)) votesByMember.set(v.userId,new Set()); votesByMember.get(v.userId).add(v.activityId); }
+  const completed = new Set(members.filter(id => activityIds.size > 0 && [...activityIds].every(aid => votesByMember.get(id)?.has(aid))));
+  const participation = { memberCount: members.length, votedCount: completed.size, pendingMemberIds: members.filter(id => !completed.has(id)) };
+  const complete = state !== 'OPEN' || tallies.every(t => t.pending === 0) || (deadline !== null && now >= deadline);
   const canCloseEarly = !complete && tallies.filter(t => t.couldStillWin).length <= 1;
   if (!complete) return { tallies, participation, votesRevealed: false, canCloseEarly, survivorIds: eligible.map(a => a.id), eliminatedIds: [], outcome: 'inProgress', winnerActivityId: null };
   const survivorIds = tallies.filter(t => t.canProgress).map(t => t.activityId);

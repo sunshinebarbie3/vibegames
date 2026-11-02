@@ -3,12 +3,14 @@ import assert from 'node:assert/strict';
 import { evaluate, publicDecision } from '../src/domain.js';
 const ideas = ['pizza','bowling','braai'].map(id => ({ id, title:id, status:'SUGGESTED' }));
 const vote = (activityId,userId,choice) => ({ activityId,userId,choice,epochMillis:100 });
-test('results stay hidden until every member votes', () => {
+test('results stay hidden until every member votes on every idea', () => {
   const e = evaluate({ activities:ideas, memberIds:['a','b'], votes:[vote('pizza','a',true)] });
   assert.equal(e.votesRevealed,false); assert.equal(e.outcome,'inProgress');
   const d = publicDecision({ id:'round',activityIds:ideas.map(x=>x.id),votes:{a:[vote('pizza','a',true)]} },e);
   assert.deepEqual(d.tallies,[]); assert.equal(d.winnerActivityId,null); assert.equal(d.votes,undefined);
-  assert.deepEqual(d.myVotes,undefined); assert.equal(d.activityIds.length,3);
+  assert.deepEqual(d.myVotes,undefined); assert.equal(d.activityIds.length,3); assert.equal(e.participation.votedCount,0);
+  const completeVotes=['a','b'].flatMap(u=>ideas.map(i=>vote(i.id,u,i.id==='pizza')));
+  const complete=evaluate({activities:ideas,memberIds:['a','b'],votes:completeVotes}); assert.equal(complete.votesRevealed,true); assert.equal(complete.outcome,'winner');
 });
 test('one majority winner settles the round', () => {
   const e=evaluate({activities:ideas,memberIds:['a','b'],votes:['a','b'].flatMap(u=>[vote('pizza',u,true),vote('bowling',u,false),vote('braai',u,false)])});

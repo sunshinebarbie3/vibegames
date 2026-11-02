@@ -16,7 +16,7 @@ Node.js / Express REST API (Cloud Run)
   Firebase Cloud Storage: private photo blobs
 ```
 
-There is no SQL database in this backend. Firebase Authentication owns password credentials; Firestore is the NoSQL database; Firebase Storage stores private photo objects. `api-container/` (the old EF/Azure SQL service) has been removed so there is a single active REST service at `server/`.
+There is no SQL database in this backend. Firebase Authentication owns password credentials; Firestore is the NoSQL database; Firebase Storage stores private photo objects. The superseded EF/Azure SQL service has been removed so there is a single active REST service at `server/`.
 
 ## Offline-first data flow
 

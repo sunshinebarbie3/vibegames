@@ -50,15 +50,26 @@ object DecisionEngine {
             )
         }
 
-        val votedMemberIds = input.votes.map { it.userId }.filter { it in memberSet }.toSet()
+        // A member has completed their ballot only after voting once on every
+        // idea in the round. Counting a single YES as a complete ballot would
+        // close the round before the remaining cards could be answered.
+        val activityIds = eligible.map { it.id }.toSet()
+        val activityIdsByMember = input.votes
+            .filter { it.userId in memberSet && it.activityId in activityIds }
+            .groupBy { it.userId }
+            .mapValues { (_, votes) -> votes.map { it.activityId }.toSet() }
+        val completedMemberIds = members.filter { memberId ->
+            activityIds.isNotEmpty() && activityIdsByMember[memberId].orEmpty().containsAll(activityIds)
+        }.toSet()
         val participation = Participation(
             memberCount = members.size,
-            votedCount = votedMemberIds.size,
-            pendingMemberIds = members.filter { it !in votedMemberIds },
+            votedCount = completedMemberIds.size,
+            pendingMemberIds = members.filter { it !in completedMemberIds },
         )
 
         val deadlinePassed = input.deadlineEpochMillis?.let { input.nowEpochMillis >= it } ?: false
-        val roundOver = input.state != RoundState.OPEN || participation.everyoneVoted || deadlinePassed
+        val everyActivityVoted = tallies.all { it.pending == 0 }
+        val roundOver = input.state != RoundState.OPEN || everyActivityVoted || deadlinePassed
         val votesRevealed = roundOver
 
         // While a round is open, waiting for the last votes can still be worth it -

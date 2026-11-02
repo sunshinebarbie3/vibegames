@@ -183,8 +183,11 @@ export class VibeStore {
   async push(n) {
     const devices = await this.list('devices', 'userId', n.userId);
     if (!devices.length) return;
-    const result = await this.s.messaging.sendEachForMulticast({ tokens: devices.map(d => d.id), data: { id: n.id, type: n.type, groupId: n.groupId || '', title: n.title, body: n.body } });
-    await Promise.all(result.responses.map(async (r, i) => { if (!r.success && ['messaging/registration-token-not-registered', 'messaging/invalid-registration-token'].includes(r.error?.code)) await this.ref('devices', devices[i].id).delete(); }));
+    for (let offset=0;offset<devices.length;offset+=500) {
+      const batch=devices.slice(offset,offset+500);
+      const result = await this.s.messaging.sendEachForMulticast({ tokens: batch.map(d => d.id), data: { id: n.id, type: n.type, groupId: n.groupId || '', title: n.title, body: n.body } });
+      await Promise.all(result.responses.map(async (r, i) => { if (!r.success && ['messaging/registration-token-not-registered', 'messaging/invalid-registration-token'].includes(r.error?.code)) await this.ref('devices', batch[i].id).delete(); }));
+    }
     await this.put('notifications', n.id, { pushPending: false });
   }
   async flush(uid) {
@@ -221,7 +224,7 @@ export class VibeStore {
       case 'decision.vote': data = await this.vote(uid, item.entityId.split(':')[0], payload); break;
       case 'decision.close': data = await this.close(uid, item.entityId); break;
       case 'plan.save': data = await this.savePlan(uid, payload, item.entityId); break;
-      case 'plan.complete': data = await this.complete(uid, payload.planId || item.entityId, { ...payload, clientId: hash(item.clientId) }); break;
+      case 'plan.complete': data = await this.complete(uid, payload.planId || item.entityId, { ...payload, clientId: payload.clientId || hash(item.clientId) }); break;
       case 'memory.save': data = await this.complete(uid, payload.planId, { ...payload, clientId: item.entityId, notify: false }); break;
       case 'profile.update': data = await this.updateProfile(uid, payload); break;
       default: throw new ApiError(422, 'Unknown sync action.');

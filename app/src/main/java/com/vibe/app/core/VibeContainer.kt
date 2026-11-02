@@ -75,7 +75,9 @@ class VibeContainer private constructor(private val context: Context) {
         syncManager.start()
         appScope.launch {
             settings.session.collect { session ->
-                if (session != null) {
+                if (session == null) {
+                    database.clearAllTables()
+                } else {
                     if (session.expiresAtEpochMillis < time.nowMillis() + 60000 && connectivity.isOnline.first()) {
                         // The authenticator refreshes expired access tokens on the next 401.
                     }

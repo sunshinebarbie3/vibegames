@@ -54,6 +54,10 @@ export function firebaseServices(env = process.env) {
       const verified = await this.verify(tokens.idToken);
       return { uid: verified.uid, accessToken: tokens.idToken, refreshToken: tokens.refreshToken, expiresAtEpochMillis: Date.now() + Number(tokens.expiresIn) * 1000 };
     },
+    async unlinkGoogle(firebaseToken) {
+      const response = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:update?key=${encodeURIComponent(env.FIREBASE_WEB_API_KEY)}`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({idToken:firebaseToken,deleteProvider:['google.com'],returnSecureToken:true}), signal:AbortSignal.timeout(15000) });
+      if (!response.ok) throw new ApiError(409,'Set a password before unlinking Google.');
+    },
     async linkGoogle(firebaseToken, googleId) {
       const p = await this.googleToken(googleId), current = await this.verify(firebaseToken);
       assert(current.email?.toLowerCase() === p.email.toLowerCase(), 422, 'Use the Google account with the same email.');

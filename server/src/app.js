@@ -75,7 +75,7 @@ export function createApp(services, env = process.env) {
   app.delete('/api/v1/auth/google/link', middleware, route(async (req, res) => {
     const current = await services.auth.getUser(req.uid);
     assert(current.passwordHash || current.providerData.some(p => p.providerId === 'password'), 409, 'Set a password before unlinking Google.');
-    await services.auth.updateUser(req.uid, { providersToUnlink: ['google.com'] }); res.status(204).end();
+    await services.unlinkGoogle(req.headers.authorization.slice(7)); res.status(204).end();
   }));
   app.get('/api/v1/auth/providers', middleware, route(async (req, res) => {
     const u = await services.auth.getUser(req.uid); res.json({ providers: u.providerData.map(p => p.providerId), hasPassword: Boolean(u.passwordHash) });
