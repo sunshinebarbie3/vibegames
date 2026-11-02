@@ -9,7 +9,6 @@ import com.vibe.app.data.local.toDomain
 import com.vibe.app.data.local.toEntity
 import com.vibe.app.data.prefs.SettingsStore
 import com.vibe.app.data.remote.ApiErrorKind
-import com.vibe.app.data.remote.ApiErrorKind
 import com.vibe.app.data.remote.ApiResult
 import com.vibe.app.data.remote.CreateGroupRequest
 import com.vibe.app.data.remote.JoinGroupRequest
@@ -60,21 +59,21 @@ class GroupRepository(
         )
     }
 
-    suspend fun refresh(): VibeResult<Int> =
-        when (val result = apiResult { api.groups() }) {
+    suspend fun refresh(): VibeResult<Int> {
+        if (database.syncQueueDao().count() > 0) return VibeResult.Ok(0)
+        return when (val result = apiResult { api.groups() }) {
             is ApiResult.Success -> {
                 val now = time.nowMillis()
-                if (database.syncQueueDao().count() > 0) return VibeResult.Ok(0)
-                    result.data.forEach { dto ->
+                result.data.forEach { dto ->
                     val group = dto.toDomain()
                     database.groupDao().upsert(group.toEntity(now))
                     database.groupDao().upsertMembers(group.members.map { it.toEntity(group.id) })
                 }
                 VibeResult.Ok(result.data.size)
             }
-
             is ApiResult.Failure -> result.toProblem()
         }
+    }
 
     suspend fun refreshGroup(groupId: String): VibeResult<Group> =
         when (val result = apiResult { api.group(groupId) }) {

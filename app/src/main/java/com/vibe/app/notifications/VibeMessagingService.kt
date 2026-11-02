@@ -21,6 +21,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 
 /**
  * PoE: real-time prompts through Firebase Cloud Messaging.
@@ -51,14 +52,10 @@ class VibeMessagingService : FirebaseMessagingService() {
         val title = localisedTitle(type)
         val body = localisedBody(type)
 
-        val pending = goAsync()
-        scope.launch {
-            try {
-                if (!container.settings.settings.first().notificationsEnabled) return@launch
-                container.notificationRepository.mirrorPush(title, body, type, groupId, message.data["id"])
-                showNotification(title, body)
-                container.refreshAll()
-            } finally { pending.finish() }
+        runBlocking(Dispatchers.IO) {
+            if (!container.settings.settings.first().notificationsEnabled) return@runBlocking
+            container.notificationRepository.mirrorPush(title, body, type, groupId, message.data["id"])
+            showNotification(title, body)
         }
     }
 

@@ -4,6 +4,7 @@ import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
 import com.vibe.app.core.ConnectivityObserver
 import com.vibe.app.core.VibeResult
+import com.vibe.app.core.toProblem
 import com.vibe.app.data.local.SyncItemEntity
 import com.vibe.app.data.local.VibeDatabase
 import com.vibe.app.data.local.toDomain
