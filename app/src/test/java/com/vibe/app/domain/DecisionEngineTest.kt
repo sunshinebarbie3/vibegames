@@ -64,8 +64,8 @@ class DecisionEngineTest {
 
         assertTrue(evaluation.outcome is RoundOutcome.InProgress)
         assertFalse(evaluation.votesRevealed)
-        assertEquals(listOf(thandi, sipho).sorted(), (evaluation.outcome as RoundOutcome.InProgress).waitingForMemberIds.sorted())
-        assertEquals(1, evaluation.participation.votedCount)
+        assertEquals(listOf(lerato, thandi, sipho).sorted(), (evaluation.outcome as RoundOutcome.InProgress).waitingForMemberIds.sorted())
+        assertEquals(0, evaluation.participation.votedCount)
         assertEquals(3, evaluation.participation.memberCount)
     }
 
