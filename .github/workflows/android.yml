@@ -46,10 +46,10 @@ jobs:
           if compile_lines:
               i=compile_lines[-1]
               section=lines[max(0,i-180):min(len(lines),i+60)]
-              roots=[s.strip() for s in section if s.startswith(('e: ','w: ')) or re.search(r'(Caused by:|Compilation error|OutOfMemory|Exception|Error|error:|internal error|NoSuchMethod|Could not|unresolved reference|Type mismatch)',s,re.I)]
-              if roots: print('::error::Kotlin compiler root cause: '+' | '.join(roots[:30]).replace('%','%25'))
+              roots=[s.strip() for s in section if s.startswith(('e: ','w: ')) or re.search(r'(Caused by:|Compilation error|OutOfMemory|Exception|Error|error:|internal error|NoSuchMethod|Could not|unresolved reference|Type mismatch|KotlinCompiler|backend)',s,re.I)]
+              if roots: print('::error::Kotlin compiler diagnostics: '+' | '.join(roots[-100:]).replace('%','%25').replace('\r',' ').replace('\n',' '))
               else:
-                  for s in section[-30:]: print('::error::'+s.replace('%','%25').replace('\r','%0D').replace('\n','%0A'))
+                  print('::error::Kotlin build log excerpt: '+' | '.join(section[-80:]).replace('%','%25').replace('\r',' ').replace('\n',' '))
           start=max((i for i,s in enumerate(lines) if s.strip()=='* What went wrong:'),default=-1)
           if start >= 0:
               for s in lines[start:start+90]: print('::error::'+s.replace('%','%25').replace('\r','%0D').replace('\n','%0A'))
