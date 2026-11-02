@@ -13,14 +13,15 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with: { distribution: temurin, java-version: '21' }
-      - uses: android-actions/setup-android@v3
       - uses: gradle/actions/setup-gradle@v4
       - name: SDK packages
-        run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0'
+        run: |
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager 'platforms;android-36' 'build-tools;36.0.0'
       - name: Resources
         run: python3 tools/check_strings.py
       - name: Compile XML, Room and Kotlin
-        run: ./gradlew :app:assembleDebug :app:testDebugUnitTest :app:lintDebug --stacktrace
+        run: ./gradlew :app:assembleDebug :app:testDebugUnitTest :app:lintDebug --stacktrace 2>&1 | tee android-build.log
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -29,6 +30,7 @@ jobs:
             app/build/outputs/apk/debug/*.apk
             app/build/reports/
             app/schemas/
+            android-build.log
   api:
     runs-on: ubuntu-latest
     steps:

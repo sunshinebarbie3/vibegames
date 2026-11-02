@@ -425,4 +425,5 @@
   <string name="error_no_open_round">Akukho kuvota okuvuliwe.</string>
   <string name="error_plan_first">Gcina uhlelo kuqala.</string>
   <string name="privacy_help">Amalungu abona isithombe sakho emaqenjini eniwabelana ngawo kuphela.</string>
+  <string name="group_leave_confirm">Shiya leli qembu?</string>
 </resources>

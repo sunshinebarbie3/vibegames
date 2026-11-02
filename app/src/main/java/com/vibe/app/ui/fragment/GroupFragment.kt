@@ -19,7 +19,7 @@ class GroupFragment : Fragment(R.layout.fragment_detail) {
     private val vm: VibeViewModel by activityViewModels { VibeViewModel.factory(container) }
     override fun onViewCreated(view: View, state: Bundle?) {
         val b = FragmentDetailBinding.bind(view), id = requireArguments().getString("groupId").orEmpty()
-        listOf<View>(b.filters,b.list,b.photo,b.secondary,b.tertiary,b.delete,b.extra).forEach { it.visibility = View.GONE }
+        listOf<View>(b.filters,b.list,b.photo,b.secondary,b.tertiary,b.delete,b.extra,b.manage).forEach { it.visibility = View.GONE }
         var filter = "all"
         val adapter = CardAdapter { navigate(R.id.activityFragment, "entityId" to it.id) }
         b.list.layoutManager = LinearLayoutManager(requireContext()); b.list.adapter = adapter
@@ -47,6 +47,11 @@ class GroupFragment : Fragment(R.layout.fragment_detail) {
             b.tertiary.setText(R.string.group_share_invite); b.tertiary.setOnClickListener { startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, getString(R.string.group_invite_share_text, g.name, g.inviteCode)), getString(R.string.group_share_invite))) }
             b.delete.setText(R.string.group_view_winner); b.delete.setOnClickListener { navigate(R.id.winnerFragment, "groupId" to id) }
             b.extra.visibility = View.VISIBLE; b.extra.setText(R.string.plans_title); b.extra.setOnClickListener { navigate(R.id.plansFragment, "groupId" to id) }
+            val owner = g.ownerId == vm.session.value?.userId
+            b.manage.visibility = View.VISIBLE; b.manage.setText(if (owner) R.string.group_delete else R.string.group_leave)
+            b.manage.setOnClickListener { confirm(if (owner) R.string.group_delete else R.string.group_leave,if (owner) R.string.group_delete_confirm else R.string.group_leave_confirm) {
+                vm.action({ if (owner) vm.c.groupRepository.deleteGroup(id) else vm.c.groupRepository.leaveGroup(id) }) { if (showResult(it)) back() }
+            } }
             render()
         }
     }

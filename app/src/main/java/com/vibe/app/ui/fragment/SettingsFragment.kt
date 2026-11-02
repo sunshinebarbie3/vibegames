@@ -16,6 +16,7 @@ import com.vibe.app.core.VibeResult
 import com.vibe.app.databinding.FragmentSettingsBinding
 import com.vibe.app.domain.AppLanguage
 import com.vibe.app.domain.SyncItem
+import com.vibe.app.data.local.toDomain
 import com.vibe.app.domain.ThemeMode
 import com.vibe.app.ui.*
 import com.vibe.app.ui.viewmodel.VibeViewModel
@@ -47,11 +48,26 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         b.conflicts.setOnClickListener { showConflicts(vm.conflicts.value) }
         b.language.setOnClickListener { navigate(R.id.languageFragment) }; b.password.setOnClickListener { navigate(R.id.passwordFragment) }; b.editProfile.setOnClickListener { navigate(R.id.editProfileFragment) }
         b.logout.setOnClickListener { vm.signOut { showResult(it) } }
-        b.deleteAccount.visibility = View.GONE // Enabled only after the backend deletion capability is configured.
+        b.deleteAccount.setOnClickListener {
+            val field = com.google.android.material.textfield.TextInputEditText(requireContext()).apply { inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD }
+            val box = com.google.android.material.textfield.TextInputLayout(requireContext()).apply { setHint(R.string.field_current_password); addView(field) }
+            MaterialAlertDialogBuilder(requireContext()).setTitle(R.string.auth_account_delete).setMessage(R.string.auth_account_delete_confirm).setView(box).setNegativeButton(R.string.action_cancel,null).setPositiveButton(R.string.auth_account_delete) { _,_ ->
+                vm.action({ vm.c.authRepository.deleteAccount(field.text?.toString()) }) { showResult(it,R.string.auth_account_deleted) }
+            }.show()
+        }
+        b.failed.setOnClickListener { showFailed() }
         collect(vm.online) { online -> if (online) vm.action({ vm.c.authRepository.providers() }) { if (it is VibeResult.Ok) { googleLinked = "google.com" in it.value.providers; b.linkGoogle.setText(if (googleLinked) R.string.auth_google_unlink else R.string.auth_google_link) } } }
         b.linkGoogle.setOnClickListener {
             if (googleLinked) vm.action({ vm.c.authRepository.unlinkGoogle() }) { if (showResult(it)) { googleLinked = false; b.linkGoogle.setText(R.string.auth_google_link) } }
             else vm.action({ val token = vm.c.googleSignIn.requestIdToken(requireContext()).getOrElse { return@action VibeResult.Problem(detail = it.message) }; vm.c.authRepository.linkGoogle(token) }) { if (showResult(it,R.string.auth_google_linked)) { googleLinked = true; b.linkGoogle.setText(R.string.auth_google_unlink) } }
+        }
+    }
+    private fun showFailed() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            val failed = vm.c.database.syncQueueDao().all().filter { it.state == "FAILED" }.map { it.toDomain() }
+            if (failed.isEmpty()) { snack(R.string.settings_sync_done); return@launch }
+            val item = failed.first()
+            MaterialAlertDialogBuilder(requireContext()).setTitle(R.string.settings_failed_changes).setMessage(item.action.wire + "\n" + item.lastError.orEmpty()).setPositiveButton(R.string.settings_retry) { _,_ -> viewLifecycleOwner.lifecycleScope.launch { vm.c.syncManager.retry(item) } }.setNegativeButton(R.string.settings_discard) { _,_ -> viewLifecycleOwner.lifecycleScope.launch { vm.c.syncManager.resolveKeepingServer(item) } }.setNeutralButton(R.string.action_close,null).show()
         }
     }
     private fun showConflicts(items: List<SyncItem>) {

@@ -425,4 +425,5 @@
   <string name="error_no_open_round">There is no open voting round yet.</string>
   <string name="error_plan_first">Save a plan first.</string>
   <string name="privacy_help">Other members can see your profile photo only in shared groups.</string>
+  <string name="group_leave_confirm">Leave this group? Your pending changes must be synced first.")</string>
 </resources>
