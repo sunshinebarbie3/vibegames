@@ -16,7 +16,13 @@ async function request(url, options={}) {
 // Minimal contract test double: real Firestore transaction behavior is tested by emulator tests.
 function services() {
   const data=new Map();
-  const db={collection:name=>({doc:id=>({get:async()=>({exists:data.has(name+'/'+id),data:()=>structuredClone(data.get(name+'/'+id))}),set:async(value)=>data.set(name+'/'+id,structuredClone(value)),create:async(value)=>{if(data.has(name+'/'+id)){const e=new Error('exists');e.code=6;throw e;}data.set(name+'/'+id,value);},delete:async()=>data.delete(name+'/'+id)}),where:()=>({get:async()=>({docs:[]})})}),runTransaction:async fn=>fn({get:async(c,id)=>({exists:data.has(c+'/'+id),data:()=>structuredClone(data.get(c+'/'+id))}),set:(c,id,v)=>data.set(c+'/'+id,{...data.get(c+'/'+id),...v}),delete:(c,id)=>data.delete(c+'/'+id)})};
+  const snapshot=(key)=>({exists:data.has(key),data:()=>structuredClone(data.get(key))});
+  const write=(key,value,merge=false)=>data.set(key,structuredClone(merge?{...data.get(key),...value}:value));
+  const doc=(c,id)=>{const key=c+'/'+id;return {get:async()=>snapshot(key),set:async(value,options)=>write(key,value,options?.merge),create:async(value)=>{if(data.has(key)){const e=new Error('exists');e.code=6;throw e;}write(key,value);},delete:async()=>data.delete(key)};};
+  const query=(c,field,op,value)=>({get:async()=>({docs:[...data].filter(([key,v])=>key.startsWith(c+'/')&&(op==='array-contains'?v[field]?.includes(value):v[field]===value)).map(([,v])=>({data:()=>structuredClone(v)}))})});
+  const tx={get:async ref=>ref.get(),set:(ref,value)=>ref.set(value),delete:ref=>ref.delete()};
+  const db={collection:c=>({doc:id=>doc(c,id),where:(field,op,value)=>query(c,field,op,value)}),runTransaction:fn=>fn(tx),batch:()=>{const ops=[];return {delete:ref=>ops.push(()=>ref.delete()),commit:async()=>{for(const op of ops)await op();}};}};
+
   return {db,data,verify:async token=>{if(token!=='valid')throw new Error('bad token');return {uid:'user-1',email:'test@example.com'}},auth:{revokeRefreshTokens:async()=>{}},login:async()=>{throw new Error('invalid')},reset:async()=>{},sessionFor:async()=>({accessToken:'valid',refreshToken:'refresh',expiresAtEpochMillis:Date.now()+3600000})};
 }
 async function withServer(fn) { const s=services(),app=createApp(s,{}),server=app.listen(0,'127.0.0.1');await new Promise(r=>server.once('listening',r));try{await fn('http://127.0.0.1:'+server.address().port,s)}finally{await new Promise(r=>server.close(r))} }

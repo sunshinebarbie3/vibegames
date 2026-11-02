@@ -17,8 +17,8 @@ import kotlin.random.Random
  *  - a round can be closed early the moment only one activity could still win.
  *
  * The engine is pure: hand it the round, the members and the votes, and it
- * returns the outcome. The same rules are mirrored by the ASP.NET Core API
- * (`api-container/Services/DecisionService.cs`) so the server and the offline
+ * returns the outcome. The same rules are mirrored by the Firebase-backed REST API
+ * (`server/src/domain.js`) so the server and the offline
  * cache can never disagree about who won.
  */
 object DecisionEngine {

@@ -37,7 +37,7 @@ object Validators {
 
     /**
      * Deliberately close to the server-side rule and to
-     * `EmailAddressAttribute` in the ASP.NET Core API, so a value that passes
+     * `EmailAddressAttribute` in the Firebase-backed REST API, so a value that passes
      * on the device is not rejected by the API.
      */
     private val EMAIL_REGEX = Regex("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")

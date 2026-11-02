@@ -16,7 +16,7 @@ val local = Properties().apply {
 fun setting(name: String, fallback: String): String =
     providers.gradleProperty(name).orElse(local.getProperty(name) ?: fallback).get()
 val signingFile = rootProject.file("keystore.properties")
-val signing = Properties().apply { if (signingFile.exists()) inputStream().use(::load) }
+val signing = Properties().apply { if (signingFile.exists()) signingFile.inputStream().use(::load) }
 
 android {
     namespace = "com.vibe.app"

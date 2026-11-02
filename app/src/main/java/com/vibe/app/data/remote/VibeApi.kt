@@ -32,7 +32,7 @@ import retrofit2.http.Path
 /**
  * The Firebase-backed REST API contract (design document, section 5).
  *
- * Conventions, mirrored by `api-container/`:
+ * Conventions, mirrored by `server/`:
  *  - JSON, camelCase field names, all timestamps are epoch milliseconds (UTC);
  *  - bearer tokens in `Authorization: Bearer <token>`;
  *  - 401 unauthenticated, 403 role check failed, 409 conflict between an
