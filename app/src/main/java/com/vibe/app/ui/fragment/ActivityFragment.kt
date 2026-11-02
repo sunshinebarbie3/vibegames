@@ -12,7 +12,8 @@ import com.vibe.app.ui.viewmodel.VibeViewModel
 class ActivityFragment : Fragment(R.layout.fragment_detail) {
     private val vm: VibeViewModel by activityViewModels { VibeViewModel.factory(container) }
     override fun onViewCreated(view: View, state: Bundle?) {
-        val b = FragmentDetailBinding.bind(view), id = requireArguments().getString("entityId").orEmpty()
+        val b = FragmentDetailBinding.bind(view)
+        val id = requireArguments().getString("entityId").orEmpty()
         listOf<View>(b.filters,b.list,b.photo,b.secondary,b.tertiary,b.delete,b.extra).forEach { it.visibility = View.GONE }
         collect(vm.activity(id)) { a ->
             a ?: return@collect

@@ -18,7 +18,8 @@ import androidx.core.view.children
 class GroupFragment : Fragment(R.layout.fragment_detail) {
     private val vm: VibeViewModel by activityViewModels { VibeViewModel.factory(container) }
     override fun onViewCreated(view: View, state: Bundle?) {
-        val b = FragmentDetailBinding.bind(view), id = requireArguments().getString("groupId").orEmpty()
+        val b = FragmentDetailBinding.bind(view)
+        val id = requireArguments().getString("groupId").orEmpty()
         listOf<View>(b.filters,b.list,b.photo,b.secondary,b.tertiary,b.delete,b.extra,b.manage).forEach { it.visibility = View.GONE }
         var filter = "all"
         val adapter = CardAdapter { navigate(R.id.activityFragment, "entityId" to it.id) }

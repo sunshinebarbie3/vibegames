@@ -14,7 +14,8 @@ class SurpriseFragment : Fragment(R.layout.fragment_decision) {
     private val vm: VibeViewModel by activityViewModels { VibeViewModel.factory(container) }
     private val rejected = mutableSetOf<String>()
     override fun onViewCreated(view: View, state: Bundle?) {
-        val b = FragmentDecisionBinding.bind(view), groupId = requireArguments().getString("groupId").orEmpty()
+        val b = FragmentDecisionBinding.bind(view)
+        val groupId = requireArguments().getString("groupId").orEmpty()
         b.progress.visibility = View.GONE; b.participation.setText(R.string.decision_surprise_title)
         b.yes.setText(R.string.decision_accept); b.no.setText(R.string.decision_skip); b.primary.visibility = View.GONE; b.secondary.visibility = View.GONE
         fun propose() {

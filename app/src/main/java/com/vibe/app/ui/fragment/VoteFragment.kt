@@ -15,7 +15,8 @@ import kotlinx.coroutines.flow.first
 class VoteFragment : Fragment(R.layout.fragment_decision) {
     private val vm: VibeViewModel by activityViewModels { VibeViewModel.factory(container) }
     override fun onViewCreated(view: View, state: Bundle?) {
-        val b = FragmentDecisionBinding.bind(view), id = requireArguments().getString("entityId").orEmpty()
+        val b = FragmentDecisionBinding.bind(view)
+        val id = requireArguments().getString("entityId").orEmpty()
         b.primary.visibility = View.GONE
         collect(vm.round(id)) { round ->
             round ?: return@collect
