@@ -57,7 +57,16 @@ class SettingsStore(context: Context) {
     init {
         // Migrate plaintext tokens from v1, then remove the old values.
         CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
+            val old = store.data.first()
+            val userId = old[Keys.USER_ID]
+            val oldAccess = old[Keys.ACCESS_TOKEN].orEmpty()
+            val oldRefresh = old[Keys.REFRESH_TOKEN].orEmpty()
+            if (userId != null && vault.access().isBlank()) {
+                if (oldAccess.isNotBlank() && oldRefresh.isNotBlank()) vault.save(oldAccess, oldRefresh)
+                else { store.edit { it.remove(Keys.USER_ID); it.remove(Keys.USER_NAME); it.remove(Keys.USER_EMAIL) } }
+            }
             store.edit { it.remove(Keys.ACCESS_TOKEN); it.remove(Keys.REFRESH_TOKEN) }
+            tokenVersion.update { it + 1 }
         }
     }
 

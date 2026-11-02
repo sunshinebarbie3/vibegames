@@ -21,7 +21,7 @@ class ActivityFragment : Fragment(R.layout.fragment_detail) {
             b.secondary.visibility = View.VISIBLE; b.tertiary.visibility = View.VISIBLE; b.delete.visibility = View.VISIBLE
             b.primary.setText(R.string.activity_plan); b.primary.setOnClickListener { navigate(R.id.planFragment, "entityId" to id, "groupId" to a.groupId) }
             b.secondary.setText(R.string.activity_edit); b.secondary.setOnClickListener { navigate(R.id.activityFormFragment, "entityId" to id, "groupId" to a.groupId) }
-            b.tertiary.setText(if (a.favourite) R.string.activity_favourite_remove else R.string.activity_favourite_add); b.tertiary.setOnClickListener { vm.action({ vm.c.activityRepository.toggleFavourite(a) }) { showResult(it) } }
+            b.tertiary.setText(if (a.favourite) R.string.activity_favourite_remove else R.string.activity_favourite_add); b.tertiary.setOnClickListener { vm.action({ vm.c.activityRepository.setFavourite(a,!a.favourite) }) { showResult(it) } }
             b.delete.setText(R.string.activity_delete); b.delete.setOnClickListener { confirm(R.string.activity_delete, R.string.activity_delete_confirm) { vm.action({ vm.c.activityRepository.deleteActivity(id) }) { if (showResult(it)) back() } } }
         }
     }

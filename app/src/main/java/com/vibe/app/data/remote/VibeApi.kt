@@ -217,7 +217,7 @@ data class UpdateProfileRequest(
     val photoUri: String? = null,
 )
 
-data class CreateGroupRequest(val name: String, val icon: String, val clientId: String? = null)
+data class CreateGroupRequest(val name: String, val icon: String, val clientId: String? = null, val inviteCode: String? = null)
 data class JoinGroupRequest(val inviteCode: String)
 
 data class UpsertActivityRequest(

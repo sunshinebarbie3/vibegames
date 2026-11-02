@@ -50,7 +50,10 @@ class PhotoStore(context: Context) {
 }
 
 class MediaRepository(private val api: VibeApi, val photos: PhotoStore) {
+    suspend fun uploadAll(uris: List<String>, groupId: String?): List<String> = uris.map { upload(it, groupId) }
+
     suspend fun upload(localUri: String, groupId: String?): String = withContext(Dispatchers.IO) {
+        if (localUri.startsWith("vibe-blob://")) return@withContext localUri
         val file = File(Uri.parse(localUri).path ?: error("Invalid local photo"))
         check(file.exists()) { "The original photo is no longer on this device." }
         val part = MultipartBody.Part.createFormData("photo", file.name, file.asRequestBody("image/jpeg".toMediaType()))

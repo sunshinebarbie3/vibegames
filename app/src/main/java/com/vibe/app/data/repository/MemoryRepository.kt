@@ -149,15 +149,16 @@ class MemoryRepository(
             clientId = memory.id,
         )
         val queued = queue.enqueue(SyncAction.COMPLETE_PLAN, planId, payload, CompletePlanRequest::class.java)
+        val requestPayload = if (queue.isOnline()) payload.copy(photoUris = media?.uploadAll(persistedPhotos, memory.groupId) ?: persistedPhotos) else payload
 
-        return when (val result = com.vibe.app.data.sync.onlineMutation(queue, queued) { api.completePlan(planId, payload) }) {
+        return when (val result = com.vibe.app.data.sync.onlineMutation(queue, queued) { api.completePlan(planId, requestPayload) }) {
             is ApiResult.Success -> {
                 val saved = result.data.toDomain()
                 database.memoryDao().upsert(saved.toEntity())
                 VibeResult.Ok(saved)
             }
 
-            is ApiResult.Failure -> if (result.kind == ApiErrorKind.NETWORK) {
+            is ApiResult.Failure -> if (result.kind == ApiErrorKind.NETWORK || result.kind == ApiErrorKind.SERVER) {
                 VibeResult.Ok(memory)
             } else {
                 result.toProblem()
@@ -198,7 +199,8 @@ class MemoryRepository(
             groupId = updated.groupId,
         )
         val queued = queue.enqueue(SyncAction.SAVE_MEMORY, memoryId, payload, CompletePlanRequest::class.java)
-        return when (val result = com.vibe.app.data.sync.onlineMutation(queue, queued) { api.updateMemory(memoryId, payload) }) {
+        val requestPayload = if (queue.isOnline()) payload.copy(photoUris = media?.uploadAll(persistedPhotos, updated.groupId) ?: persistedPhotos) else payload
+        return when (val result = com.vibe.app.data.sync.onlineMutation(queue, queued) { api.updateMemory(memoryId, requestPayload) }) {
             is ApiResult.Success -> {
                 val saved = result.data.toDomain()
                 database.memoryDao().upsert(saved.toEntity())

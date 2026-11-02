@@ -1,4 +1,3 @@
-import { FieldValue } from 'firebase-admin/firestore';
 import { randomUUID, createHash } from 'node:crypto';
 import { ApiError, assert, idValid } from './errors.js';
 import { evaluate, publicDecision } from './domain.js';
@@ -44,7 +43,7 @@ export class VibeStore {
   async groups(uid) { const rows = await this.list('groups', 'memberIds', uid, 'array-contains'); return Promise.all(rows.map(g => this.groupDto(g, uid))); }
   async createGroup(uid, payload) {
     const id = payload.clientId || randomUUID(); assert(idValid(id), 422, 'Invalid client ID.');
-    const code = Array.from({ length: 6 }, () => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(Math.random() * 32)]).join('');
+    const code = payload.inviteCode || Array.from({ length: 6 }, () => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(Math.random() * 32)]).join('');
     const result = await this.transaction(async tx => {
       const existing = await tx.get('groups', id);
       if (existing) { assert(existing.ownerId === uid, 403, 'This group belongs to another member.'); return existing; }

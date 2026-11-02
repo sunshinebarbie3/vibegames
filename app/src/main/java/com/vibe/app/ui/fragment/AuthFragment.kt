@@ -22,7 +22,7 @@ class AuthFragment : Fragment(R.layout.fragment_auth) {
         b.heading.setText(if (register) R.string.register_title else R.string.login_title)
         b.primary.setText(if (register) R.string.action_register else R.string.action_login)
         b.switchMode.setText(if (register) R.string.action_login else R.string.action_register)
-        b.nameBox.visibility = if (register) View.VISIBLE else View.GONE
+        b.displayNameBox.visibility = if (register) View.VISIBLE else View.GONE
         b.confirmationBox.visibility = if (register) View.VISIBLE else View.GONE
         b.forgot.visibility = if (register) View.GONE else View.VISIBLE
         b.subtitle.setText(if (register) R.string.auth_password_policy else R.string.login_subtitle)

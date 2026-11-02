@@ -98,7 +98,8 @@ class AuthRepository(
         database.userDao().upsert(updated.toEntity()); settings.updateDisplayName(updated.displayName); settings.setPhotoUri(photo)
         val payload = UpdateProfileRequest(updated.displayName, updated.username, photoUri = photo)
         val item = queue.enqueue(SyncAction.UPDATE_PROFILE, current.id, payload, UpdateProfileRequest::class.java)
-        return when (val r = onlineMutation(queue, item) { api.updateProfile(payload) }) {
+        val requestPayload = if (queue.isOnline() && photo?.startsWith("file://") == true) payload.copy(photoUri = media?.upload(photo, null) ?: photo) else payload
+        return when (val r = onlineMutation(queue, item) { api.updateProfile(requestPayload) }) {
             is ApiResult.Success -> VibeResult.Ok(r.data.toDomain())
             is ApiResult.Failure -> if (r.kind == ApiErrorKind.NETWORK || r.kind == ApiErrorKind.SERVER) VibeResult.Ok(updated) else r.toProblem()
         }

@@ -12,7 +12,7 @@ import { VibeStore, now } from './store.js';
 const password = z.string().min(8).max(128).regex(/\d/, 'Include at least one digit.');
 const email = z.email().max(254).transform(s => s.trim().toLowerCase());
 const profile = z.object({ displayName: z.string().trim().min(1).max(40).optional(), username: z.string().trim().min(1).max(30).regex(/^[a-zA-Z0-9_]+$/).optional(), language: z.enum(['en','zu','st']).optional(), themeMode: z.enum(['DARK','LIGHT','SYSTEM']).optional(), notificationsEnabled: z.boolean().optional(), privacyMembersOnly: z.boolean().optional(), photoUri: z.string().max(200).nullable().optional() }).strict();
-const groupSchema = z.object({ name: z.string().trim().min(1).max(60), icon: z.string().min(1).max(16), clientId: z.string().optional() });
+const groupSchema = z.object({ name: z.string().trim().min(1).max(60), icon: z.string().min(1).max(16), clientId: z.string().optional(), inviteCode: z.string().regex(/^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{6}$/).optional() });
 const activitySchema = z.object({ title: z.string().trim().min(1).max(80), description: z.string().max(500).default(''), icon: z.string().max(16).default('🎉'), favourite: z.boolean().nullable().optional(), status: z.enum(['SUGGESTED','ACTIVE']).optional(), clientId: z.string().optional(), groupId: z.string().optional() });
 const voteSchema = z.object({ activityId: z.string(), choice: z.boolean(), clientTimestampEpochMillis: z.number().int().nonnegative(), clientId: z.string() });
 const memorySchema = z.object({ rating: z.number().int().min(0).max(5), caption: z.string().max(280), photoUris: z.array(z.string().max(200)).max(10).default([]), clientId: z.string().optional(), planId: z.string().optional(), groupId: z.string().optional() });
