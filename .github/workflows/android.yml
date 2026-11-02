@@ -41,11 +41,11 @@ jobs:
           p=Path('android-build.log')
           lines=p.read_text().splitlines() if p.exists() else ['Android build log missing']
           import re
-          matched=[s for s in lines if s.startswith(('e: ','w: ')) or re.search(r'(Could not|couldn.t|unresolved|failed|FAILURE|What went wrong|Execution failed|not found|timed out|UnknownHost|PKIX|401|403|404|500|Error:|Exception:|A problem occurred)',s,re.I)]
+          matched=[s for s in lines if s.startswith(('e: ','w: ')) or re.search(r'(Could not|couldn.t|unresolved|failed|FAILURE|What went wrong|Execution failed|not found|timed out|UnknownHost|PKIX|401|403|404|500|error:|Error:|Exception:|A problem occurred|Type mismatch|Overload resolution|cannot find|not enough information|Expecting)',s,re.I)]
           start=max((i for i,s in enumerate(lines) if s.strip()=='* What went wrong:'),default=-1)
           if start >= 0:
               for s in lines[start:start+90]: print('::error::'+s.replace('%','%25').replace('\r','%0D').replace('\n','%0A'))
-          details=[s.strip() for s in matched if s.startswith(('e: ','w: ')) or re.search(r'(Could not find|Could not get|Could not resolve|No cached version|PKIX|UnknownHost|status code|Received status|not found|timed out|unresolved reference)',s,re.I)]
+          details=[s.strip() for s in matched if s.startswith(('e: ','w: ')) or re.search(r'(Could not find|Could not get|Could not resolve|No cached version|PKIX|UnknownHost|status code|Received status|not found|timed out|unresolved reference|error:|Type mismatch|Overload resolution|Expecting)',s,re.I)]
           if details: print('::error::Dependency/compiler details: '+' | '.join(details[:18]).replace('%','%25'))
           if start < 0:
               for s in (matched or lines[:80])[:18]: print('::error::'+s.replace('%','%25').replace('\r','%0D').replace('\n','%0A'))
