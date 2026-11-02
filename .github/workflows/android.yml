@@ -8,20 +8,40 @@ permissions:
   contents: read
 jobs:
   android:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
         with: { distribution: temurin, java-version: '21' }
       - uses: gradle/actions/setup-gradle@v4
-      - name: SDK packages
+      - name: Install Android SDK
         run: |
-          yes | sdkmanager --licenses >/dev/null || true
-          sdkmanager 'platforms;android-36' 'build-tools;36.0.0'
+          set -euo pipefail
+          SDK="$RUNNER_TEMP/android-sdk"
+          mkdir -p "$SDK/cmdline-tools"
+          curl -fsSL --retry 3 https://dl.google.com/android/repository/commandlinetools-linux-13114758_latest.zip -o "$RUNNER_TEMP/android-tools.zip"
+          unzip -q "$RUNNER_TEMP/android-tools.zip" -d "$SDK/cmdline-tools"
+          mv "$SDK/cmdline-tools/cmdline-tools" "$SDK/cmdline-tools/latest"
+          echo "ANDROID_HOME=$SDK" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$SDK" >> "$GITHUB_ENV"
+          yes | "$SDK/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
+          "$SDK/cmdline-tools/latest/bin/sdkmanager" 'platforms;android-36' 'build-tools;36.0.0' 'platform-tools'
       - name: Resources
         run: python3 tools/check_strings.py
       - name: Compile XML, Room and Kotlin
-        run: ./gradlew :app:assembleDebug :app:testDebugUnitTest :app:lintDebug --stacktrace 2>&1 | tee android-build.log
+        run: |
+          set -o pipefail
+          ./gradlew :app:assembleDebug :app:testDebugUnitTest :app:lintDebug --stacktrace 2>&1 | tee android-build.log
+      - name: Surface compiler errors
+        if: failure()
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('android-build.log')
+          lines=p.read_text().splitlines() if p.exists() else ['Android build log missing']
+          errors=[s for s in lines if s.startswith('e:') or 'FAILURE:' in s or 'What went wrong:' in s or 'Error:' in s or 'Caused by:' in s]
+          for s in (errors or lines[-40:])[:35]: print('::error::'+s.replace('%','%25').replace('\r','%0D').replace('\n','%0A'))
+          PY
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -32,10 +52,10 @@ jobs:
             app/schemas/
             android-build.log
   api:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with: { node-version: '22', cache: npm, cache-dependency-path: server/package-lock.json }
       - run: npm ci
         working-directory: server
