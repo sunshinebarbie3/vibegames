@@ -27,7 +27,8 @@ jobs:
           yes | "$SDK/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
           "$SDK/cmdline-tools/latest/bin/sdkmanager" 'platforms;android-36' 'build-tools;36.0.0' 'platform-tools'
       - name: Resources
-        run: python3 tools/check_strings.py
+        run: |
+          python3 tools/check_strings.py || { python3 tools/check_strings.py 2>&1 | while IFS= read -r line; do echo "::error::$line"; done; exit 1; }
       - name: Compile XML, Room and Kotlin
         run: |
           set -o pipefail
