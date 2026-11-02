@@ -186,7 +186,7 @@ export function createApp(services, env = process.env) {
     if (error instanceof z.ZodError) return res.status(422).json({ error: 'Please check the highlighted field.', field: error.issues[0]?.path?.[0], details: error.issues.map(i => ({ field: i.path.join('.'), message: i.message })) });
     if (error instanceof multer.MulterError) return res.status(413).json({ error: 'Photo must be smaller than 10 MB.' });
     const status = error.status || (error.code === 6 ? 409 : 500);
-    if (status >= 500) console.error('API request failed:', error.code || error.name, req.path);
+    if (status >= 500) console.error('API request failed:', error.stack || error, req.path);
     res.status(status).json({ error: status >= 500 ? 'The service is temporarily unavailable. Your changes remain saved on this device.' : error.message, ...(error.field ? { field: error.field } : {}) });
   });
   return app;

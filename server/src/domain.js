@@ -26,5 +26,5 @@ export function evaluate({ activities, memberIds, votes = [], roundNumber = 1, s
 }
 export function publicDecision(d, evaluation) {
   const revealed = evaluation.votesRevealed;
-  return { ...d, ...evaluation, tallies: revealed ? evaluation.tallies : [], survivorIds: revealed ? evaluation.survivorIds : [], eliminatedIds: revealed ? evaluation.eliminatedIds : [], winnerActivityId: revealed ? evaluation.winnerActivityId : null, votes: undefined, memberIds: undefined, activityIds: revealed ? d.activityIds : undefined };
+  return { ...d, ...evaluation, tallies: revealed ? evaluation.tallies : [], survivorIds: revealed ? evaluation.survivorIds : [], eliminatedIds: revealed ? evaluation.eliminatedIds : [], winnerActivityId: revealed ? evaluation.winnerActivityId : null, votes: undefined, memberIds: undefined, activityIds: d.activityIds };
 }

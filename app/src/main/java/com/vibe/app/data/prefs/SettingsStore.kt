@@ -78,7 +78,7 @@ class SettingsStore(context: Context) {
     }
 
     val session: Flow<Session?> = kotlinx.coroutines.flow.combine(store.data, tokenVersion) { prefs, _ ->
-        val userId = prefs[Keys.USER_ID] ?: return@map null
+        val userId = prefs[Keys.USER_ID] ?: return@combine null
         Session(
             userId = userId,
             displayName = prefs[Keys.USER_NAME].orEmpty(),

@@ -32,7 +32,7 @@ jobs:
       - name: Compile XML, Room and Kotlin
         run: |
           set -o pipefail
-          ./gradlew :app:assembleDebug :app:testDebugUnitTest :app:lintDebug --stacktrace 2>&1 | tee android-build.log
+          bash ./gradlew :app:assembleDebug :app:testDebugUnitTest :app:lintDebug --stacktrace 2>&1 | tee android-build.log
       - name: Surface compiler errors
         if: failure()
         run: |

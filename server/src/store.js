@@ -1,6 +1,6 @@
 import { FieldValue } from 'firebase-admin/firestore';
 import { randomUUID, createHash } from 'node:crypto';
-import { assert, idValid } from './errors.js';
+import { ApiError, assert, idValid } from './errors.js';
 import { evaluate, publicDecision } from './domain.js';
 
 export const now = () => Date.now();
