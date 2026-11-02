@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android" layout_width="match_parent" layout_height="match_parent" fillViewport="true" background="@color/canvas" xmlns:app="http://schemas.android.com/apk/res-auto">
+  <LinearLayout android:orientation="vertical" android:padding="20dp" android:layout_width="match_parent" android:layout_height="wrap_content">
+    <TextView android:id="@+id/subtitle" android:text="@help_subtitle" android:textSize="16sp" android:textColor="@color/text_secondary" android:layout_width="match_parent" android:layout_height="wrap_content" />
+    <TextView android:id="@+id/q1" android:text="@help_q1" android:textSize="18sp" android:textColor="@color/text_primary" android:layout_width="match_parent" android:layout_height="wrap_content" android:textStyle="bold" android:paddingTop="24dp" />
+    <TextView android:id="@+id/a1" android:text="@help_a1" android:textSize="16sp" android:textColor="@color/text_secondary" android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingTop="8dp" android:lineSpacingExtra="4dp" />
+    <TextView android:id="@+id/q2" android:text="@help_q2" android:textSize="18sp" android:textColor="@color/text_primary" android:layout_width="match_parent" android:layout_height="wrap_content" android:textStyle="bold" android:paddingTop="24dp" />
+    <TextView android:id="@+id/a2" android:text="@help_a2" android:textSize="16sp" android:textColor="@color/text_secondary" android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingTop="8dp" android:lineSpacingExtra="4dp" />
+    <TextView android:id="@+id/q3" android:text="@help_q3" android:textSize="18sp" android:textColor="@color/text_primary" android:layout_width="match_parent" android:layout_height="wrap_content" android:textStyle="bold" android:paddingTop="24dp" />
+    <TextView android:id="@+id/a3" android:text="@help_a3" android:textSize="16sp" android:textColor="@color/text_secondary" android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingTop="8dp" android:lineSpacingExtra="4dp" />
+    <TextView android:id="@+id/q4" android:text="@help_q4" android:textSize="18sp" android:textColor="@color/text_primary" android:layout_width="match_parent" android:layout_height="wrap_content" android:textStyle="bold" android:paddingTop="24dp" />
+    <TextView android:id="@+id/a4" android:text="@help_a4" android:textSize="16sp" android:textColor="@color/text_secondary" android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingTop="8dp" android:lineSpacingExtra="4dp" />
+  </LinearLayout>
+</ScrollView>

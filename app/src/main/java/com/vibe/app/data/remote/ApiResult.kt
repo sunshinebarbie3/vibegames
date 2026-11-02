@@ -46,7 +46,7 @@ suspend fun <T> apiResult(block: suspend () -> T): ApiResult<T> = try {
         kind = errorKindFor(failure.code()),
         message = failure.message(),
         httpCode = failure.code(),
-        serverPayload = body,
+        serverPayload = if (failure.code() == 409) body else null,
     )
 } catch (failure: IOException) {
     // No connectivity, DNS failure, timeout: the caller keeps the queued change.

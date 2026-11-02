@@ -1,355 +1,428 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">VIBE</string>
-    <string name="tagline">Stop arguing. Start vibing.</string>
-
-    <!-- Shared actions -->
-    <string name="action_cancel">Cancel</string>
-    <string name="action_save">Save</string>
-    <string name="action_back">Back</string>
-    <string name="action_add">Add</string>
-    <string name="action_edit">Edit</string>
-    <string name="action_delete">Delete</string>
-    <string name="action_share">Share</string>
-    <string name="action_done">Done</string>
-    <string name="action_next">Next</string>
-    <string name="action_retry">Try again</string>
-    <string name="action_close">Close</string>
-    <string name="action_yes">Yes</string>
-    <string name="action_no">No</string>
-    <string name="action_get_started">Get started</string>
-    <string name="action_skip">Skip</string>
-    <string name="action_copy_code">Copy code</string>
-
-    <!-- Onboarding / splash -->
-    <string name="onboarding_title_1">Build the plan together</string>
-    <string name="onboarding_body_1">Every idea your crew adds lands on one shared Vibe List.</string>
-    <string name="onboarding_title_2">Vote without the drama</string>
-    <string name="onboarding_body_2">Decide For Us runs quick YES/NO rounds until one plan survives.</string>
-    <string name="onboarding_title_3">Keep the memories</string>
-    <string name="onboarding_body_3">Mark a plan done and save photos, captions and a group rating.</string>
-
-    <!-- Authentication -->
-    <string name="login_title">Welcome back</string>
-    <string name="login_subtitle">Your group is waiting. Let\'s make the plan.</string>
-    <string name="register_title">Create your account</string>
-    <string name="register_subtitle">Start making plans with your people.</string>
-    <string name="field_display_name">Display name</string>
-    <string name="field_email">Email address</string>
-    <string name="field_password">Password</string>
-    <string name="field_confirm_password">Confirm password</string>
-    <string name="show_password">Show password</string>
-    <string name="hide_password">Hide password</string>
-    <string name="action_login">Log in</string>
-    <string name="action_register">Create account</string>
-    <string name="link_to_login">Already have an account? Log in</string>
-    <string name="link_to_register">Don\'t have an account? Sign up</string>
-    <string name="forgot_password">Forgot your password?</string>
-    <string name="continue_with_google">Continue with Google</string>
-    <string name="auth_or_divider">or</string>
-    <string name="password_reset_help">We send a reset link to your email address. Ask an owner of your group for help if you no longer use that address.</string>
-    <string name="password_reset_sent">Check your email for the reset link.</string>
-
-    <!-- Validation and errors -->
-    <string name="error_name_required">Please enter your display name.</string>
-    <string name="error_email_invalid">Enter a valid email address.</string>
-    <string name="error_password_short">Use at least 8 characters.</string>
-    <string name="error_password_digit">Include at least one number.</string>
-    <string name="error_password_mismatch">Passwords do not match.</string>
-    <string name="error_login_failed">Email or password is incorrect.</string>
-    <string name="error_current_password">Your current password is incorrect.</string>
-    <string name="error_group_code">That invite code does not match a group.</string>
-    <string name="error_group_name">Give the group a name.</string>
-    <string name="error_activity_title">Give the activity a title.</string>
-    <string name="error_activities_needed">Add at least two activities before starting a round.</string>
-    <string name="error_owner_only">Only the group owner can start a round.</string>
-    <string name="error_offline_auth">You are offline, so we could not check those details. Reconnect and try again.</string>
-    <string name="error_generic">Something went wrong. Please try again.</string>
-    <string name="error_no_connection">No connection. Your change is saved and will sync later.</string>
-
-    <!-- Home -->
-    <string name="home_greeting">Hey, %1$s</string>
-    <string name="home_subtitle">What are we vibing today?</string>
-    <string name="home_your_groups">Your groups</string>
-    <string name="home_view_all">View all</string>
-    <string name="home_quick_start">Quick start</string>
-    <string name="home_empty_title">No groups yet</string>
-    <string name="home_empty_body">Create a group for your crew, or join one with an invite code, and start deciding together.</string>
-    <string name="home_decide_cta">Decide for us</string>
-    <string name="home_decide_cta_body">Start YES/NO rounds on your group\'s ideas</string>
-    <string name="home_notifications">Notifications</string>
-    <string name="quick_decide_title">Can\'t Decide?</string>
-    <string name="quick_decide_body">Run YES/NO rounds until one plan wins</string>
-    <string name="quick_surprise_title">Surprise Me</string>
-    <string name="quick_surprise_body">Let VIBE propose one eligible activity</string>
-    <string name="quick_activities_title">My Activities</string>
-    <string name="quick_activities_body">Ideas you added to your groups</string>
-    <string name="quick_add_title">Add an activity</string>
-    <string name="quick_add_body">Drop a new idea on the Vibe List</string>
-    <string name="quick_create_group_title">Create a group</string>
-    <string name="quick_create_group_body">Start a fresh list with your people</string>
-    <string name="quick_start_decision_title">Start a decision</string>
-    <string name="quick_start_decision_body">Open YES/NO rounds for a group</string>
-    <string name="quick_actions">Quick actions</string>
-
-    <!-- Groups -->
-    <string name="groups_title">Your groups</string>
-    <string name="groups_subtitle">Your people, your plans.</string>
-    <string name="create_group_title">Create a group</string>
-    <string name="create_group_name">Group name</string>
-    <string name="create_group_name_hint">Friday Night Crew</string>
-    <string name="create_group_icon">Pick an icon</string>
-    <string name="action_create_group">Create group</string>
-    <string name="join_group_title">Join a group</string>
-    <string name="join_group_code">Invite code</string>
-    <string name="join_group_hint">Ask a member for the 6-character code.</string>
-    <string name="join_group_confirm">You are about to join %1$s. Members of this group can see the activities you add.</string>
-    <string name="action_join_group">Join group</string>
-    <string name="group_joined_message">You joined %1$s</string>
-    <string name="group_invite_code">Invite code</string>
-    <string name="group_share_invite">Share invite code</string>
-    <string name="group_code_copied">Invite code copied</string>
-    <string name="group_share_text">Join %1$s on VIBE with the code %2$s</string>
-    <string name="group_start_decision">Start decision</string>
-    <string name="group_add_activity">Add activity</string>
-    <string name="group_vibe_list">Vibe List</string>
-    <string name="group_role_owner">Owner</string>
-    <string name="group_role_member">Member</string>
-    <string name="group_leave">Leave group</string>
-    <string name="group_empty_activities">No ideas yet. Add the first activity and get the list moving.</string>
-    <string name="group_members_title">Members</string>
-    <string name="group_created_message">Group created. Share the invite code.</string>
-
-    <!-- Activities -->
-    <string name="activities_title">Activities</string>
-    <string name="activities_subtitle">Ideas for your next VIBE.</string>
-    <string name="filter_all">All</string>
-    <string name="filter_suggested">Suggested</string>
-    <string name="filter_completed">Completed</string>
-    <string name="filter_favourites">Favourites</string>
-    <string name="filter_mine">Mine</string>
-    <string name="activity_add_title">Add an activity</string>
-    <string name="activity_edit_title">Edit activity</string>
-    <string name="activity_title_label">What should we do?</string>
-    <string name="activity_title_hint">Bowling night</string>
-    <string name="activity_description_label">Add a note (optional)</string>
-    <string name="activity_added_by">Added by %1$s</string>
-    <string name="activity_yes_count">%1$d said yes</string>
-    <string name="activity_favourite">Favourite</string>
-    <string name="activity_unfavourite">Remove favourite</string>
-    <string name="activity_detail_title">Activity</string>
-    <string name="activity_add_to_decision">Add to Decide For Us</string>
-    <string name="activity_status_active">On the list</string>
-    <string name="activity_status_completed">Completed</string>
-    <string name="activity_status_eliminated">Eliminated</string>
-    <string name="activity_status_winner">Winner</string>
-    <string name="activity_saved_offline">Saved offline. It will sync when you are back online.</string>
-
-    <!-- Decide For Us -->
-    <string name="decision_title">Decide For Us</string>
-    <string name="decision_subtitle">One vote each. No hiding behind “I don\'t mind”.</string>
-    <string name="decision_round_label">Round %1$d</string>
-    <string name="decision_responses">%1$d of %2$d answered</string>
-    <string name="decision_start_title">Ready to decide?</string>
-    <string name="decision_start_body">Every saved idea goes into YES/NO rounds. Weak options drop out, and nothing is revealed until a round closes.</string>
-    <string name="action_start_voting">Start voting</string>
-    <string name="decision_vote_equal">Your vote counts exactly the same as everyone else\'s.</string>
-    <string name="decision_vote_sent">Vote sent. Waiting for the rest of the group…</string>
-    <string name="decision_waiting_deadline">Voting closes %1$s</string>
-    <string name="decision_state_open">Voting open</string>
-    <string name="decision_state_closed">Round closed</string>
-    <string name="decision_state_finished">Winner confirmed</string>
-    <string name="decision_eliminated_title">Out of the running</string>
-    <string name="decision_no_winner">No activity cleared the round. Add a new idea or run another round.</string>
-    <string name="decision_progress">Round %1$d · %2$d still in</string>
-    <string name="winner_title">We have a winner!</string>
-    <string name="winner_votes">%1$d of %2$d voted yes</string>
-    <string name="winner_confetti">Confetti for the group 🎉</string>
-    <string name="action_plan_it">Plan it</string>
-    <string name="action_add_to_memories">Add to memories</string>
-    <string name="surprise_title">Surprise Me</string>
-    <string name="surprise_body">VIBE picked one eligible activity from your list.</string>
-    <string name="action_accept">Accept</string>
-    <string name="action_reject">Reject</string>
-    <string name="action_surprise_again">Pick another</string>
-    <string name="surprise_none">No eligible activity yet. Add a few ideas first.</string>
-    <string name="surprise_accepted">Locked in. Go plan it.</string>
-    <string name="surprise_rejected">Skipped. Let\'s try another one.</string>
-    <string name="decision_history">Past decisions</string>
-
-    <!-- Plans and memories -->
-    <string name="plan_title">Plan details</string>
-    <string name="plan_when_label">When is it happening?</string>
-    <string name="plan_pick_datetime">Pick date and time</string>
-    <string name="plan_save">Save plan</string>
-    <string name="plan_scheduled_for">Planned for %1$s</string>
-    <string name="plan_mark_complete">Mark as done</string>
-    <string name="plan_completed_message">Nice one. Saved to Memories.</string>
-    <string name="plan_no_date">No date yet</string>
-    <string name="memories_title">Memories</string>
-    <string name="memories_subtitle">Plans you actually did, together.</string>
-    <string name="memories_empty_title">No memories yet</string>
-    <string name="memories_empty_body">Finish a plan together, then save the photos, a caption and a group rating.</string>
-    <string name="memory_detail_title">Memory</string>
-    <string name="memory_caption_label">Caption</string>
-    <string name="memory_caption_hint">That night we finally made it to the beach.</string>
-    <string name="memory_rating_label">Group rating</string>
-    <string name="memory_add_photo">Add photo</string>
-    <string name="memory_save">Save memory</string>
-    <string name="memory_saved">Memory saved.</string>
-    <string name="memory_photo_count">%1$d photos</string>
-    <string name="memory_rating_value">%1$d/5</string>
-    <string name="memory_rating_your_turn">Tap a star to rate this memory.</string>
-
-    <!-- Profile -->
-    <string name="profile_title">Profile</string>
-    <string name="profile_change_photo">Change photo</string>
-    <string name="profile_stats_decisions">Decisions</string>
-    <string name="profile_stats_activities">Activities</string>
-    <string name="profile_stats_groups">Groups</string>
-    <string name="profile_edit">Edit profile</string>
-    <string name="profile_my_groups">My groups</string>
-    <string name="profile_my_activities">My activities</string>
-    <string name="profile_settings">Settings</string>
-    <string name="profile_language">Language</string>
-    <string name="profile_help">Help &amp; support</string>
-    <string name="profile_username_label">Username</string>
-    <string name="profile_saved">Profile updated.</string>
-    <string name="profile_photo_note">Profile photos stay on this device in the PoE build.</string>
-
-    <!-- Settings -->
-    <string name="settings_title">Settings</string>
-    <string name="settings_subtitle">Make VIBE feel like yours.</string>
-    <string name="settings_account">Account</string>
-    <string name="settings_notifications">Notifications</string>
-    <string name="settings_notifications_detail">Invitations, new options, vote deadlines and winners</string>
-    <string name="settings_privacy">Privacy</string>
-    <string name="settings_privacy_members">Group members only</string>
-    <string name="settings_privacy_invite">Only people I invite</string>
-    <string name="settings_theme">Theme</string>
-    <string name="settings_theme_dark">Dark</string>
-    <string name="settings_theme_light">Light</string>
-    <string name="settings_theme_system">System default</string>
-    <string name="settings_language">Language</string>
-    <string name="settings_language_detail">Labels and alerts follow this choice</string>
-    <string name="settings_password">Change password</string>
-    <string name="settings_password_detail">Keep your account and memories safe</string>
-    <string name="settings_linked_accounts">Linked accounts</string>
-    <string name="settings_linked_google">Google</string>
-    <string name="settings_linked_connected">Connected</string>
-    <string name="settings_linked_not_connected">Not connected</string>
-    <string name="settings_sign_out">Sign out</string>
-    <string name="field_current_password">Current password</string>
-    <string name="field_new_password">New password</string>
-    <string name="action_update_password">Update password</string>
-    <string name="password_updated">Password updated.</string>
-    <string name="language_english">English</string>
-    <string name="language_zulu">isiZulu</string>
-    <string name="language_sesotho">Sesotho</string>
-    <string name="settings_local_first">Offline first</string>
-    <string name="settings_pending_sync">%1$d change(s) waiting to sync</string>
-    <string name="settings_sync_now">Sync now</string>
-    <string name="settings_sync_done">Everything is in sync.</string>
-    <string name="settings_open_conflicts">Review conflicts</string>
-
-    <!-- Notifications -->
-    <string name="notifications_title">Notifications</string>
-    <string name="notifications_empty">Nothing here yet. Invitations, vote deadlines and winners show up here, even offline.</string>
-    <string name="notifications_mark_all_read">Mark all as read</string>
-    <string name="notification_channel_plans">Plans and votes</string>
-    <string name="notification_channel_plans_detail">Invitations, new activity options, vote deadlines and winners.</string>
-
-    <!-- Help -->
-    <string name="help_title">Help &amp; support</string>
-    <string name="help_subtitle">Quick answers, then a human if you still need one.</string>
-    <string name="help_q1">How does Decide For Us work?</string>
-    <string name="help_a1">Every saved activity enters YES/NO rounds. Options that cannot reach a majority are eliminated, survivors go forward, and the last one standing is your winner. Vote totals are always visible after the round closes.</string>
-    <string name="help_q2">What happens offline?</string>
-    <string name="help_a2">Your group, ideas and votes are cached on the device. Adding or voting offline is timestamped, queued, and sent when your connection returns. If somebody else changed the same thing, VIBE shows you the conflict instead of quietly overwriting it.</string>
-    <string name="help_q3">Can I change the language and theme?</string>
-    <string name="help_a3">Yes. Settings has English, isiZulu and Sesotho, plus a dark and light theme. Alerts follow the same choice.</string>
-    <string name="help_q4">Who can start a round?</string>
-    <string name="help_a4">The group owner starts a round, but every member gets exactly one YES/NO vote per activity.</string>
-    <string name="help_contact">Email support</string>
-    <string name="help_contact_body">support@vibe.app</string>
-
-    <!-- Offline and sync -->
-    <string name="state_loading">Loading…</string>
-    <string name="state_offline">You are offline</string>
-    <string name="state_offline_detail">Showing saved data. Changes are queued.</string>
-    <string name="state_syncing">Syncing…</string>
-    <string name="state_saved_offline">Saved offline, will sync automatically.</string>
-    <string name="conflict_title">We found a sync conflict</string>
-    <string name="conflict_body">%1$s changed while you were offline. Choose which version to keep.</string>
-    <string name="conflict_keep_mine">Keep mine</string>
-    <string name="conflict_keep_theirs">Keep theirs</string>
-    <string name="conflict_resolved">Conflict resolved.</string>
-    <string name="sync_state_pending">Pending</string>
-    <string name="sync_state_synced">Synced</string>
-    <string name="sync_state_conflict">Conflict</string>
-
-    <!-- Content descriptions -->
-    <string name="cd_nav_home">Home</string>
-    <string name="cd_nav_memories">Memories</string>
-    <string name="cd_nav_profile">Profile</string>
-    <string name="cd_nav_activities">Activities</string>
-    <string name="cd_nav_groups">Groups</string>
-    <string name="cd_add">Add</string>
-    <string name="cd_back">Back</string>
-    <string name="cd_avatar">Member photo</string>
-    <string name="cd_memory_photo">Memory photo</string>
-    <string name="cd_star">Rating star %1$d</string>
-    <string name="cd_group_icon">Group icon</string>
-    <string name="cd_activity_icon">Activity icon</string>
-    <string name="cd_open_group">Open group</string>
-    <string name="cd_quick_add">Quick actions</string>
-    <string name="cd_logo">VIBE logo</string>
-
-    <string-array name="group_icons">
-        <item>🎉</item>
-        <item>💗</item>
-        <item>🎮</item>
-        <item>⚽</item>
-        <item>🍿</item>
-        <item>🎧</item>
-        <item>🏖️</item>
-        <item>🚗</item>
-    </string-array>
-
-    <string-array name="activity_icons">
-        <item>🍕</item>
-        <item>🎳</item>
-        <item>🍿</item>
-        <item>🎮</item>
-        <item>🏖️</item>
-        <item>🥾</item>
-        <item>☕</item>
-        <item>🎤</item>
-        <item>🛍️</item>
-        <item>🏀</item>
-    </string-array>
-
-    <plurals name="group_members">
-        <item quantity="one">%1$d member</item>
-        <item quantity="other">%1$d members</item>
-    </plurals>
-    <plurals name="sync_pending_count">
-        <item quantity="one">%1$d change waiting to sync</item>
-        <item quantity="other">%1$d changes waiting to sync</item>
-    </plurals>
-    <plurals name="activity_count">
-        <item quantity="one">%1$d activity</item>
-        <item quantity="other">%1$d activities</item>
-    </plurals>
-    <string name="notification_invite_title">You have a group invitation</string>
-    <string name="notification_invite_body">Tap to see the group and add your first idea.</string>
-    <string name="notification_activity_title">New idea on the Vibe List</string>
-    <string name="notification_activity_body">A group member added something new to decide on.</string>
-    <string name="notification_deadline_title">Vote before the round closes</string>
-    <string name="notification_deadline_body">Your YES or NO is still missing.</string>
-    <string name="notification_winner_title">The group has a winner</string>
-    <string name="notification_winner_body">Open the plan to pick a date and time.</string>
-    <string name="notification_memory_title">A plan became a memory</string>
-    <string name="notification_memory_body">Photos, a caption and the group rating are waiting.</string>
-    <string name="decision_can_close">Enough votes to decide. Close the round for the final comparison.</string>
+  <string name="app_name">VIBE</string>
+  <string name="tagline">Stop arguing. Start vibing.</string>
+  <string name="action_cancel">Cancel</string>
+  <string name="action_save">Save</string>
+  <string name="action_back">Back</string>
+  <string name="action_add">Add</string>
+  <string name="action_edit">Edit</string>
+  <string name="action_delete">Delete</string>
+  <string name="action_share">Share</string>
+  <string name="action_done">Done</string>
+  <string name="action_next">Next</string>
+  <string name="action_retry">Try again</string>
+  <string name="action_close">Close</string>
+  <string name="action_yes">Yes</string>
+  <string name="action_no">No</string>
+  <string name="action_get_started">Get started</string>
+  <string name="action_skip">Skip</string>
+  <string name="action_copy_code">Copy code</string>
+  <string name="onboarding_title_1">Build the plan together</string>
+  <string name="onboarding_body_1">Every idea your crew adds lands on one shared Vibe List.</string>
+  <string name="onboarding_title_2">Vote without the drama</string>
+  <string name="onboarding_body_2">Decide For Us runs quick YES/NO rounds until one plan survives.</string>
+  <string name="onboarding_title_3">Keep the memories</string>
+  <string name="onboarding_body_3">Mark a plan done and save photos, captions and a group rating.</string>
+  <string name="login_title">Welcome back</string>
+  <string name="login_subtitle">Your group is waiting. Let\'s make the plan.</string>
+  <string name="register_title">Create your account</string>
+  <string name="register_subtitle">Start making plans with your people.</string>
+  <string name="field_display_name">Display name</string>
+  <string name="field_email">Email address</string>
+  <string name="field_password">Password</string>
+  <string name="field_confirm_password">Confirm password</string>
+  <string name="show_password">Show password</string>
+  <string name="hide_password">Hide password</string>
+  <string name="action_login">Log in</string>
+  <string name="action_register">Create account</string>
+  <string name="link_to_login">Already have an account? Log in</string>
+  <string name="link_to_register">Don\'t have an account? Sign up</string>
+  <string name="forgot_password">Forgot your password?</string>
+  <string name="continue_with_google">Continue with Google</string>
+  <string name="auth_or_divider">or</string>
+  <string name="password_reset_help">We send a reset link to your email address. Ask an owner of your group for help if you no longer use that address.</string>
+  <string name="password_reset_sent">Check your email for the reset link.</string>
+  <string name="error_name_required">Please enter your display name.</string>
+  <string name="error_email_invalid">Enter a valid email address.</string>
+  <string name="error_password_short">Use at least 8 characters.</string>
+  <string name="error_password_digit">Include at least one number.</string>
+  <string name="error_password_mismatch">Passwords do not match.</string>
+  <string name="error_login_failed">Email or password is incorrect.</string>
+  <string name="error_current_password">Your current password is incorrect.</string>
+  <string name="error_group_code">That invite code does not match a group.</string>
+  <string name="error_group_name">Give the group a name.</string>
+  <string name="error_activity_title">Give the activity a title.</string>
+  <string name="error_activities_needed">Add at least two activities before starting a round.</string>
+  <string name="error_owner_only">Only the group owner can start a round.</string>
+  <string name="error_offline_auth">You are offline, so we could not check those details. Reconnect and try again.</string>
+  <string name="error_generic">Something went wrong. Please try again.</string>
+  <string name="error_no_connection">No connection. Your change is saved and will sync later.</string>
+  <string name="home_greeting">Hey, %1$s</string>
+  <string name="home_subtitle">What are we vibing today?</string>
+  <string name="home_your_groups">Your groups</string>
+  <string name="home_view_all">View all</string>
+  <string name="home_quick_start">Quick start</string>
+  <string name="home_empty_title">No groups yet</string>
+  <string name="home_empty_body">Create a group for your crew, or join one with an invite code, and start deciding together.</string>
+  <string name="home_decide_cta">Decide for us</string>
+  <string name="home_decide_cta_body">Start YES/NO rounds on your group\'s ideas</string>
+  <string name="home_notifications">Notifications</string>
+  <string name="quick_decide_title">Can\'t Decide?</string>
+  <string name="quick_decide_body">Run YES/NO rounds until one plan wins</string>
+  <string name="quick_surprise_title">Surprise Me</string>
+  <string name="quick_surprise_body">Let VIBE propose one eligible activity</string>
+  <string name="quick_activities_title">My Activities</string>
+  <string name="quick_activities_body">Ideas you added to your groups</string>
+  <string name="quick_add_title">Add an activity</string>
+  <string name="quick_add_body">Drop a new idea on the Vibe List</string>
+  <string name="quick_create_group_title">Create a group</string>
+  <string name="quick_create_group_body">Start a fresh list with your people</string>
+  <string name="quick_start_decision_title">Start a decision</string>
+  <string name="quick_start_decision_body">Open YES/NO rounds for a group</string>
+  <string name="quick_actions">Quick actions</string>
+  <string name="groups_title">Your groups</string>
+  <string name="groups_subtitle">Your people, your plans.</string>
+  <string name="create_group_title">Create a group</string>
+  <string name="create_group_name">Group name</string>
+  <string name="create_group_name_hint">Friday Night Crew</string>
+  <string name="create_group_icon">Pick an icon</string>
+  <string name="action_create_group">Create group</string>
+  <string name="join_group_title">Join a group</string>
+  <string name="join_group_code">Invite code</string>
+  <string name="join_group_hint">Ask a member for the 6-character code.</string>
+  <string name="join_group_confirm">You are about to join %1$s. Members of this group can see the activities you add.</string>
+  <string name="action_join_group">Join group</string>
+  <string name="group_joined_message">You joined %1$s</string>
+  <string name="group_invite_code">Invite code</string>
+  <string name="group_share_invite">Share invite code</string>
+  <string name="group_code_copied">Invite code copied</string>
+  <string name="group_share_text">Join %1$s on VIBE with the code %2$s</string>
+  <string name="group_start_decision">Start decision</string>
+  <string name="group_add_activity">Add activity</string>
+  <string name="group_vibe_list">Vibe List</string>
+  <string name="group_role_owner">Owner</string>
+  <string name="group_role_member">Member</string>
+  <string name="group_leave">Leave group</string>
+  <string name="group_empty_activities">No ideas yet. Add the first activity and get the list moving.</string>
+  <string name="group_members_title">Members</string>
+  <string name="group_created_message">Group created. Share the invite code.</string>
+  <string name="activities_title">Activities</string>
+  <string name="activities_subtitle">Ideas for your next VIBE.</string>
+  <string name="filter_all">All</string>
+  <string name="filter_suggested">Suggested</string>
+  <string name="filter_completed">Completed</string>
+  <string name="filter_favourites">Favourites</string>
+  <string name="filter_mine">Mine</string>
+  <string name="activity_add_title">Add an activity</string>
+  <string name="activity_edit_title">Edit activity</string>
+  <string name="activity_title_label">What should we do?</string>
+  <string name="activity_title_hint">Bowling night</string>
+  <string name="activity_description_label">Add a note (optional)</string>
+  <string name="activity_added_by">Added by %1$s</string>
+  <string name="activity_yes_count">%1$d said yes</string>
+  <string name="activity_favourite">Favourite</string>
+  <string name="activity_unfavourite">Remove favourite</string>
+  <string name="activity_detail_title">Activity</string>
+  <string name="activity_add_to_decision">Add to Decide For Us</string>
+  <string name="activity_status_active">On the list</string>
+  <string name="activity_status_completed">Completed</string>
+  <string name="activity_status_eliminated">Eliminated</string>
+  <string name="activity_status_winner">Winner</string>
+  <string name="activity_saved_offline">Saved offline. It will sync when you are back online.</string>
+  <string name="decision_title">Decide For Us</string>
+  <string name="decision_subtitle">One vote each. No hiding behind “I don\'t mind”.</string>
+  <string name="decision_round_label">Round %1$d</string>
+  <string name="decision_responses">%1$d of %2$d answered</string>
+  <string name="decision_start_title">Ready to decide?</string>
+  <string name="decision_start_body">Every saved idea goes into YES/NO rounds. Weak options drop out, and nothing is revealed until a round closes.</string>
+  <string name="action_start_voting">Start voting</string>
+  <string name="decision_vote_equal">Your vote counts exactly the same as everyone else\'s.</string>
+  <string name="decision_vote_sent">Vote sent. Waiting for the rest of the group…</string>
+  <string name="decision_waiting_deadline">Voting closes %1$s</string>
+  <string name="decision_state_open">Voting open</string>
+  <string name="decision_state_closed">Round closed</string>
+  <string name="decision_state_finished">Winner confirmed</string>
+  <string name="decision_eliminated_title">Out of the running</string>
+  <string name="decision_no_winner">No activity cleared the round. Add a new idea or run another round.</string>
+  <string name="decision_progress">Round %1$d · %2$d still in</string>
+  <string name="winner_title">We have a winner!</string>
+  <string name="winner_votes">%1$d of %2$d voted yes</string>
+  <string name="winner_confetti">Confetti for the group 🎉</string>
+  <string name="action_plan_it">Plan it</string>
+  <string name="action_add_to_memories">Add to memories</string>
+  <string name="surprise_title">Surprise Me</string>
+  <string name="surprise_body">VIBE picked one eligible activity from your list.</string>
+  <string name="action_accept">Accept</string>
+  <string name="action_reject">Reject</string>
+  <string name="action_surprise_again">Pick another</string>
+  <string name="surprise_none">No eligible activity yet. Add a few ideas first.</string>
+  <string name="surprise_accepted">Locked in. Go plan it.</string>
+  <string name="surprise_rejected">Skipped. Let\'s try another one.</string>
+  <string name="decision_history">Past decisions</string>
+  <string name="plan_title">Plan details</string>
+  <string name="plan_when_label">When is it happening?</string>
+  <string name="plan_pick_datetime">Pick date and time</string>
+  <string name="plan_save">Save plan</string>
+  <string name="plan_scheduled_for">Planned for %1$s</string>
+  <string name="plan_mark_complete">Mark as done</string>
+  <string name="plan_completed_message">Nice one. Saved to Memories.</string>
+  <string name="plan_no_date">No date yet</string>
+  <string name="memories_title">Memories</string>
+  <string name="memories_subtitle">Plans you actually did, together.</string>
+  <string name="memories_empty_title">No memories yet</string>
+  <string name="memories_empty_body">Finish a plan together, then save the photos, a caption and a group rating.</string>
+  <string name="memory_detail_title">Memory</string>
+  <string name="memory_caption_label">Caption</string>
+  <string name="memory_caption_hint">That night we finally made it to the beach.</string>
+  <string name="memory_rating_label">Group rating</string>
+  <string name="memory_add_photo">Add photo</string>
+  <string name="memory_save">Save memory</string>
+  <string name="memory_saved">Memory saved.</string>
+  <string name="memory_photo_count">%1$d photos</string>
+  <string name="memory_rating_value">%1$d/5</string>
+  <string name="memory_rating_your_turn">Tap a star to rate this memory.</string>
+  <string name="profile_title">Profile</string>
+  <string name="profile_change_photo">Change photo</string>
+  <string name="profile_stats_decisions">Decisions</string>
+  <string name="profile_stats_activities">Activities</string>
+  <string name="profile_stats_groups">Groups</string>
+  <string name="profile_edit">Edit profile</string>
+  <string name="profile_my_groups">My groups</string>
+  <string name="profile_my_activities">My activities</string>
+  <string name="profile_settings">Settings</string>
+  <string name="profile_language">Language</string>
+  <string name="profile_help">Help &amp; support</string>
+  <string name="profile_username_label">Username</string>
+  <string name="profile_saved">Profile updated.</string>
+  <string name="profile_photo_note">Profile photos stay on this device in the PoE build.</string>
+  <string name="settings_title">Settings</string>
+  <string name="settings_subtitle">Make VIBE feel like yours.</string>
+  <string name="settings_account">Account</string>
+  <string name="settings_notifications">Notifications</string>
+  <string name="settings_notifications_detail">Invitations, new options, vote deadlines and winners</string>
+  <string name="settings_privacy">Privacy</string>
+  <string name="settings_privacy_members">Group members only</string>
+  <string name="settings_privacy_invite">Only people I invite</string>
+  <string name="settings_theme">Theme</string>
+  <string name="settings_theme_dark">Dark</string>
+  <string name="settings_theme_light">Light</string>
+  <string name="settings_theme_system">System default</string>
+  <string name="settings_language">Language</string>
+  <string name="settings_language_detail">Labels and alerts follow this choice</string>
+  <string name="settings_password">Change password</string>
+  <string name="settings_password_detail">Keep your account and memories safe</string>
+  <string name="settings_linked_accounts">Linked accounts</string>
+  <string name="settings_linked_google">Google</string>
+  <string name="settings_linked_connected">Connected</string>
+  <string name="settings_linked_not_connected">Not connected</string>
+  <string name="settings_sign_out">Sign out</string>
+  <string name="field_current_password">Current password</string>
+  <string name="field_new_password">New password</string>
+  <string name="action_update_password">Update password</string>
+  <string name="password_updated">Password updated.</string>
+  <string name="language_english">English</string>
+  <string name="language_zulu">isiZulu</string>
+  <string name="language_sesotho">Sesotho</string>
+  <string name="settings_local_first">Offline first</string>
+  <string name="settings_pending_sync">%1$d change(s) waiting to sync</string>
+  <string name="settings_sync_now">Sync now</string>
+  <string name="settings_sync_done">Everything is in sync.</string>
+  <string name="settings_open_conflicts">Review conflicts</string>
+  <string name="notifications_title">Notifications</string>
+  <string name="notifications_empty">Nothing here yet. Invitations, vote deadlines and winners show up here, even offline.</string>
+  <string name="notifications_mark_all_read">Mark all as read</string>
+  <string name="notification_channel_plans">Plans and votes</string>
+  <string name="notification_channel_plans_detail">Invitations, new activity options, vote deadlines and winners.</string>
+  <string name="help_title">Help &amp; support</string>
+  <string name="help_subtitle">Quick answers, then a human if you still need one.</string>
+  <string name="help_q1">How does Decide For Us work?</string>
+  <string name="help_a1">Every saved activity enters YES/NO rounds. Options that cannot reach a majority are eliminated, survivors go forward, and the last one standing is your winner. Vote totals are always visible after the round closes.</string>
+  <string name="help_q2">What happens offline?</string>
+  <string name="help_a2">Your group, ideas and votes are cached on the device. Adding or voting offline is timestamped, queued, and sent when your connection returns. If somebody else changed the same thing, VIBE shows you the conflict instead of quietly overwriting it.</string>
+  <string name="help_q3">Can I change the language and theme?</string>
+  <string name="help_a3">Yes. Settings has English, isiZulu and Sesotho, plus a dark and light theme. Alerts follow the same choice.</string>
+  <string name="help_q4">Who can start a round?</string>
+  <string name="help_a4">The group owner starts a round, but every member gets exactly one YES/NO vote per activity.</string>
+  <string name="help_contact">Email support</string>
+  <string name="help_contact_body">support@vibe.app</string>
+  <string name="state_loading">Loading…</string>
+  <string name="state_offline">You are offline</string>
+  <string name="state_offline_detail">Showing saved data. Changes are queued.</string>
+  <string name="state_syncing">Syncing…</string>
+  <string name="state_saved_offline">Saved offline, will sync automatically.</string>
+  <string name="conflict_title">We found a sync conflict</string>
+  <string name="conflict_body">%1$s changed while you were offline. Choose which version to keep.</string>
+  <string name="conflict_keep_mine">Keep mine</string>
+  <string name="conflict_keep_theirs">Keep theirs</string>
+  <string name="conflict_resolved">Conflict resolved.</string>
+  <string name="sync_state_pending">Pending</string>
+  <string name="sync_state_synced">Synced</string>
+  <string name="sync_state_conflict">Conflict</string>
+  <string name="cd_nav_home">Home</string>
+  <string name="cd_nav_memories">Memories</string>
+  <string name="cd_nav_profile">Profile</string>
+  <string name="cd_nav_activities">Activities</string>
+  <string name="cd_nav_groups">Groups</string>
+  <string name="cd_add">Add</string>
+  <string name="cd_back">Back</string>
+  <string name="cd_avatar">Member photo</string>
+  <string name="cd_memory_photo">Memory photo</string>
+  <string name="cd_star">Rating star %1$d</string>
+  <string name="cd_group_icon">Group icon</string>
+  <string name="cd_activity_icon">Activity icon</string>
+  <string name="cd_open_group">Open group</string>
+  <string name="cd_quick_add">Quick actions</string>
+  <string name="cd_logo">VIBE logo</string>
+  <string-array name="group_icons">
+    <item>🎉</item>
+    <item>💗</item>
+    <item>🎮</item>
+    <item>⚽</item>
+    <item>🍿</item>
+    <item>🎧</item>
+    <item>🏖️</item>
+    <item>🚗</item>
+  </string-array>
+  <string-array name="activity_icons">
+    <item>🍕</item>
+    <item>🎳</item>
+    <item>🍿</item>
+    <item>🎮</item>
+    <item>🏖️</item>
+    <item>🥾</item>
+    <item>☕</item>
+    <item>🎤</item>
+    <item>🛍️</item>
+    <item>🏀</item>
+  </string-array>
+  <plurals name="group_members">
+    <item quantity="one">%1$d member</item>
+    <item quantity="other">%1$d members</item>
+  </plurals>
+  <plurals name="sync_pending_count">
+    <item quantity="one">%1$d change waiting to sync</item>
+    <item quantity="other">%1$d changes waiting to sync</item>
+  </plurals>
+  <plurals name="activity_count">
+    <item quantity="one">%1$d activity</item>
+    <item quantity="other">%1$d activities</item>
+  </plurals>
+  <string name="notification_invite_title">You have a group invitation</string>
+  <string name="notification_invite_body">Tap to see the group and add your first idea.</string>
+  <string name="notification_activity_title">New idea on the Vibe List</string>
+  <string name="notification_activity_body">A group member added something new to decide on.</string>
+  <string name="notification_deadline_title">Vote before the round closes</string>
+  <string name="notification_deadline_body">Your YES or NO is still missing.</string>
+  <string name="notification_winner_title">The group has a winner</string>
+  <string name="notification_winner_body">Open the plan to pick a date and time.</string>
+  <string name="notification_memory_title">A plan became a memory</string>
+  <string name="notification_memory_body">Photos, a caption and the group rating are waiting.</string>
+  <string name="decision_can_close">Enough votes to decide. Close the round for the final comparison.</string>
+  <string name="home_cant_decide">Can’t decide? Let VIBE choose</string>
+  <string name="home_surprise_me">Surprise me</string>
+  <string name="home_my_activities">My activities</string>
+  <string name="group_view_winner">View winner</string>
+  <string name="group_open_vote">Open voting round</string>
+  <string name="group_add_idea">Add an idea</string>
+  <string name="group_created">Group created. Share its invite code!</string>
+  <string name="group_joined">You joined the group.</string>
+  <string name="group_owner">You own this group</string>
+  <string name="group_member">You are a member</string>
+  <string name="group_filter_all">All</string>
+  <string name="group_filter_favourites">Favourites</string>
+  <string name="group_filter_completed">Completed</string>
+  <string name="group_filter_suggested">Suggested</string>
+  <string name="activity_edit">Edit idea</string>
+  <string name="activity_delete">Delete idea</string>
+  <string name="activity_delete_confirm">Delete this idea? This cannot be undone.</string>
+  <string name="activity_add_decision">Mark as eligible for voting</string>
+  <string name="activity_plan">Plan this idea</string>
+  <string name="activity_empty">No ideas here yet. Add the first one.</string>
+  <string name="activity_status">Status: %1$s</string>
+  <string name="decision_round">Round %1$d · idea %2$d of %3$d</string>
+  <string name="decision_participation">%1$d of %2$d members have voted</string>
+  <string name="decision_waiting">Your votes are saved. Waiting for the rest of the group. Results stay hidden until the round closes.</string>
+  <string name="decision_close_round">Close round now</string>
+  <string name="decision_next_round">Start next round</string>
+  <string name="decision_winner">The group has a winner!</string>
+  <string name="decision_tie">It’s a tie. Start another round with the surviving ideas.</string>
+  <string name="decision_none">No idea reached a majority. Add fresh ideas and try again.</string>
+  <string name="decision_summary">YES %1$d · NO %2$d · waiting %3$d</string>
+  <string name="decision_surprise_title">How about this?</string>
+  <string name="decision_surprise_empty">No eligible ideas left. Add something new.</string>
+  <string name="decision_accept">Let’s do it</string>
+  <string name="decision_skip">Show another</string>
+  <string name="decision_vote_saved">Vote saved. One vote per person, per idea.</string>
+  <string name="plan_date_required">Choose a date and time first.</string>
+  <string name="plan_complete_title">Save the memory</string>
+  <string name="plan_saved">Plan saved.</string>
+  <string name="memory_pick_photo_error">Could not read that photo. Try another JPEG, PNG or WebP.</string>
+  <string name="memory_photo_limit">A memory can have up to 10 photos.</string>
+  <string name="memory_photo_pending">Photos are saved on this device and upload when you reconnect.</string>
+  <string name="form_required">Please complete the required fields.</string>
+  <string name="form_working">Working…</string>
+  <string name="auth_password_policy">At least 8 characters, including a number. Passwords are securely hashed by Firebase Authentication.</string>
+  <string name="auth_not_configured">This service is not configured yet. See the Firebase setup guide.</string>
+  <string name="auth_reset_sent">If this email has an account, a password reset link has been sent.</string>
+  <string name="auth_google_unlink">Unlink Google</string>
+  <string name="auth_google_link">Link Google</string>
+  <string name="auth_google_linked">Google is linked.</string>
+  <string name="auth_google_not_linked">Google is not linked.</string>
+  <string name="auth_providers_offline">Connect to the internet to see linked accounts.</string>
+  <string name="auth_account_delete">Delete account</string>
+  <string name="auth_account_delete_confirm">Permanently delete your account? First leave your groups and sync all changes. This cannot be undone.</string>
+  <string name="auth_account_deleted">Account deleted.</string>
+  <string name="auth_password_required">Enter your current password to confirm deletion.</string>
+  <string name="settings_delete_account">Delete my account</string>
+  <string name="settings_sync_failed">Some changes need attention. Review failed changes below.</string>
+  <string name="settings_failed_changes">Review failed changes</string>
+  <string name="settings_retry">Retry change</string>
+  <string name="settings_discard">Discard change</string>
+  <string name="settings_cloud_status">Firebase REST API · private blob storage</string>
+  <string name="notification_permission_rationale">Allow notifications for invitations, new ideas and winners. You can change this any time in Settings.</string>
+  <string name="notification_open_settings">Open notification settings</string>
+  <string name="error_network">You are offline. Your change is saved and will sync when you reconnect.</string>
+  <string name="error_auth">Please sign in again. Your session may have expired.</string>
+  <string name="error_server">The service is temporarily unavailable. Please try again.</string>
+  <string name="error_photo">Could not save this photo. Please try another image.</string>
+  <string name="error_not_found">This item is no longer available.</string>
+  <string name="state_synchronizing">Synchronizing your changes…</string>
+  <string name="onboarding_tagline">Stop arguing. Start vibing.</string>
+  <string name="onboarding_step1">1. Drop your ideas on a shared Vibe List.</string>
+  <string name="onboarding_step2">2. Everyone gets one fair YES or NO vote per idea.</string>
+  <string name="onboarding_step3">3. Turn the winning plan into a memory.</string>
+  <string name="activity_description_hint">Description (optional)</string>
+  <string name="join_code_hint">Six-character invite code</string>
+  <string name="group_icon_label">Choose an icon</string>
+  <string name="group_invite_share_text">Join %1$s on VIBE! Invite code: %2$s</string>
+  <string name="activity_favourite_add">Add to favourites</string>
+  <string name="activity_favourite_remove">Remove from favourites</string>
+  <string name="group_name_label">Group name</string>
+  <string name="group_create_help">A shared space for your crew’s ideas. Create it now, even offline.</string>
+  <string name="join_help">Ask a friend for their six-character invite code. Joining needs a connection.</string>
+  <string name="activity_add_help">Pizza, bowling, a braai? Add it to the list.</string>
+  <string name="profile_photo_cloud_note">Your photo is copied to private device storage, then uploaded securely to Firebase Storage.</string>
+  <string name="action_saved">Saved.</string>
+  <string name="conflict_local">Your version:
+%1$s</string>
+  <string name="conflict_server">Server version:
+%1$s</string>
+  <string name="action_confirm">Confirm</string>
+  <string name="action_send">Send</string>
+  <string name="error_caption_length">Keep the caption under 280 characters.</string>
+  <string name="error_invite_invalid">Enter a valid six-character invite code.</string>
+  <string name="error_name_length">Use at most 40 characters.</string>
+  <string name="error_not_enough_activities">Add at least two eligible ideas first.</string>
+  <string name="error_rating">Choose a rating from 0 to 5.</string>
+  <string name="password_forgot">Forgot password?</string>
+  <string name="plans_title">Plans</string>
+  <string name="plans_empty">No plans yet. Choose an idea and plan it.</string>
+  <string name="group_delete">Delete group</string>
+  <string name="group_delete_confirm">Delete this group and all its ideas, plans and memories?</string>
+  <string name="plan_mark_done">Mark as done</string>
+  <string name="error_date_required">Choose a date and time first.</string>
+  <string name="error_no_open_round">There is no open voting round yet.</string>
+  <string name="error_plan_first">Save a plan first.</string>
+  <string name="privacy_help">Other members can see your profile photo only in shared groups.</string>
 </resources>

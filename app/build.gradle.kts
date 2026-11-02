@@ -1,136 +1,120 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.ksp)
 }
+// Firebase is optional at compile time, never optional for live cloud operation.
+// Add the real app/google-services.json to enable FCM. No fabricated credentials.
+if (file("google-services.json").exists()) apply(plugin = "com.google.gms.google-services")
+
+val local = Properties().apply {
+    val f = rootProject.file("local.properties")
+    if (f.exists()) f.inputStream().use(::load)
+}
+fun setting(name: String, fallback: String): String =
+    providers.gradleProperty(name).orElse(local.getProperty(name) ?: fallback).get()
+val signingFile = rootProject.file("keystore.properties")
+val signing = Properties().apply { if (signingFile.exists()) inputStream().use(::load) }
 
 android {
     namespace = "com.vibe.app"
-    compileSdk = 37
-
+    compileSdk = 36
     defaultConfig {
         applicationId = "com.vibe.app"
         minSdk = 24
         targetSdk = 36
-        versionCode = 2
-        versionName = "1.0"
-
+        versionCode = setting("VIBE_VERSION_CODE", "3").toInt()
+        versionName = setting("VIBE_VERSION_NAME", "2.0.0")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
-
-        // PoE: the Android client talks to the REST API over HTTPS.
-        buildConfigField("String", "API_BASE_URL", "\"https://api.vibeapp.com/\"")
-        // When true the app runs against the bundled demo backend so the full
-        // flow (groups, Decide For Us, memories, offline queue) can be shown
-        // without a deployed API. Set to false to talk to API_BASE_URL.
-        buildConfigField("boolean", "USE_DEMO_BACKEND", "true")
-        // Google SSO: the *web* client id (see docs/SETUP.md §2.4). Blank keeps the
-        // button visible but explains what is missing instead of failing silently.
-        buildConfigField("String", "GOOGLE_SERVER_CLIENT_ID", "\"\"")
+        // The existing endpoint is deliberately unchanged. Override for your deployment.
+        buildConfigField("String", "API_BASE_URL", "\"${setting("API_BASE_URL", "https://api.vibeapp.com/")}\"")
+        buildConfigField("String", "GOOGLE_SERVER_CLIENT_ID", "\"${setting("GOOGLE_SERVER_CLIENT_ID", "")}\"")
+        buildConfigField("boolean", "FCM_ENABLED", file("google-services.json").exists().toString())
     }
-
+    signingConfigs {
+        if (signingFile.exists()) create("upload") {
+            storeFile = rootProject.file(signing.getProperty("storeFile"))
+            storePassword = signing.getProperty("storePassword")
+            keyAlias = signing.getProperty("keyAlias")
+            keyPassword = signing.getProperty("keyPassword")
+        }
+    }
     buildTypes {
-        debug {
-            isMinifyEnabled = false
-        }
-        getByName("release") {
-            isMinifyEnabled = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
+        debug { isMinifyEnabled = false }
+        release {
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            if (signingFile.exists()) signingConfig = signingConfigs.getByName("upload")
         }
     }
-
-    buildFeatures {
-        compose = true
-        buildConfig = true
-    }
-
+    buildFeatures { viewBinding = true; buildConfig = true }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-
-    packaging {
-        resources {
-            excludes += "/META-INF/{AL2.0,LGPL2.1}"
-        }
-    }
-
-    testOptions {
-        unitTests.isReturnDefaultValues = true
-    }
+    packaging.resources.excludes += "/META-INF/{AL2.0,LGPL2.1}"
+    testOptions.unitTests.isReturnDefaultValues = true
+    lint { abortOnError = true; checkReleaseBuilds = true }
 }
-
-kotlin {
-    compilerOptions {
-        jvmTarget = JvmTarget.JVM_17
-    }
-}
+kotlin { compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17) } }
+ksp { arg("room.schemaLocation", "$projectDir/schemas") }
 
 dependencies {
-    // Compose
-    implementation(platform(libs.androidx.compose.bom))
-    implementation(libs.androidx.compose.ui)
-    implementation(libs.androidx.compose.ui.graphics)
-    implementation(libs.androidx.compose.ui.tooling.preview)
-    implementation(libs.androidx.compose.material3)
-    implementation(libs.androidx.compose.material.icons.core)
-
-    // AndroidX plumbing
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
-    implementation(libs.androidx.activity.compose)
-    implementation(libs.androidx.lifecycle.runtime.ktx)
-    implementation(libs.androidx.lifecycle.viewmodel.compose)
-    implementation(libs.androidx.lifecycle.runtime.compose)
-    implementation(libs.androidx.navigation.compose)
-    implementation(libs.androidx.constraintlayout)
+    implementation(libs.androidx.activity)
     implementation(libs.material)
-
-    // RoomDB offline cache + sync queue (PoE requirement)
+    implementation(libs.androidx.constraintlayout)
+    implementation(libs.androidx.swiperefresh)
+    implementation(libs.androidx.lifecycle.runtime)
+    implementation(libs.androidx.lifecycle.viewmodel)
+    implementation(libs.androidx.lifecycle.livedata)
+    implementation(libs.androidx.navigation.fragment)
+    implementation(libs.androidx.navigation.ui)
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)
-
-    // Settings / session storage
     implementation(libs.androidx.datastore.preferences)
-
-    // Coroutines + networking (ASP.NET Core REST API over HTTPS)
+    implementation(libs.androidx.work)
+    implementation(libs.androidx.security)
+    implementation(libs.androidx.exifinterface)
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.kotlinx.coroutines.play.services)
     implementation(libs.retrofit)
     implementation(libs.retrofit.converter.moshi)
     implementation(libs.moshi)
     implementation(libs.moshi.kotlin)
     implementation(libs.okhttp.logging)
-
-    // Memories photos
-    implementation(libs.coil.compose)
-
-    // Google SSO (Credential Manager) and Firebase Cloud Messaging
+    implementation(libs.coil)
     implementation(libs.androidx.credentials)
     implementation(libs.androidx.credentials.play.services)
     implementation(libs.googleid)
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.messaging)
-
-    // Local JVM tests (decision engine, sync queue, validation, API mapping)
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.okhttp.mockwebserver)
-
-    // Instrumented tests (Compose UI + Room)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.test.core)
     androidTestImplementation(libs.androidx.test.runner)
     androidTestImplementation(libs.androidx.room.testing)
-    androidTestImplementation(platform(libs.androidx.compose.bom))
-    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.kotlinx.coroutines.test)
-    debugImplementation(libs.androidx.compose.ui.tooling)
-    debugImplementation(libs.androidx.compose.ui.test.manifest)
 }
+
+tasks.register("preflightRelease") {
+    group = "verification"
+    doLast {
+        val errors = mutableListOf<String>()
+        if (!file("google-services.json").exists()) errors += "Add app/google-services.json for FCM."
+        if (setting("API_BASE_URL", "https://api.vibeapp.com/") == "https://api.vibeapp.com/") errors += "Set API_BASE_URL to the deployed HTTPS REST API."
+        if (setting("GOOGLE_SERVER_CLIENT_ID", "").isBlank()) errors += "Set GOOGLE_SERVER_CLIENT_ID to the Firebase/Google web client ID."
+        if (!signingFile.exists()) errors += "Configure keystore.properties with your private upload key."
+        check(errors.isEmpty()) { errors.joinToString("\n") }
+    }
+}
+tasks.named("bundleRelease") { dependsOn("preflightRelease") }

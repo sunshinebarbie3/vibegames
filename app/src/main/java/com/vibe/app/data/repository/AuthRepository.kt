@@ -1,227 +1,137 @@
-@file:OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
-
 package com.vibe.app.data.repository
 
-import com.vibe.app.core.TimeProvider
 import com.vibe.app.core.VibeResult
 import com.vibe.app.core.toProblem
 import com.vibe.app.data.local.VibeDatabase
 import com.vibe.app.data.local.toDomain
 import com.vibe.app.data.local.toEntity
-import com.vibe.app.data.prefs.AppSettings
-import com.vibe.app.data.prefs.Session
 import com.vibe.app.data.prefs.SettingsStore
-import com.vibe.app.data.remote.ApiResult
-import com.vibe.app.data.remote.ChangePasswordRequest
-import com.vibe.app.data.remote.GoogleAuthRequest
-import com.vibe.app.data.remote.LoginRequest
-import com.vibe.app.data.remote.RegisterRequest
-import com.vibe.app.data.remote.UpdateProfileRequest
-import com.vibe.app.data.remote.VibeApi
-import com.vibe.app.data.remote.apiResult
-import com.vibe.app.data.remote.toDomain
+import com.vibe.app.data.prefs.Session
+import com.vibe.app.data.remote.*
 import com.vibe.app.data.sync.SyncQueue
-import com.vibe.app.domain.AppLanguage
-import com.vibe.app.domain.SyncAction
-import com.vibe.app.domain.ThemeMode
-import com.vibe.app.domain.User
-import com.vibe.app.domain.UserStats
-import com.vibe.app.domain.Validators
+import com.vibe.app.data.sync.onlineMutation
+import com.vibe.app.domain.*
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.withContext
 
-/**
- * Accounts, session and settings.
- *
- * Registration and login validate on the device first (mirroring the API rules)
- * so a member sees a clear message without a round trip, and the API is still
- * the only place a password is ever hashed - the client never stores one.
- */
+@OptIn(ExperimentalCoroutinesApi::class)
 class AuthRepository(
     private val api: VibeApi,
     private val database: VibeDatabase,
-    private val settings: SettingsStore,
+    val settings: SettingsStore,
     private val queue: SyncQueue,
-    private val time: TimeProvider,
+    private val media: MediaRepository? = null,
 ) {
-
-    val session: Flow<Session?> = settings.session
-
-    val appSettings: Flow<AppSettings> = settings.settings
-
-    val profile: Flow<User?> = settings.session.flatMapLatest { current ->
-        if (current == null) {
-            flowOf(null)
-        } else {
-            database.userDao().observeById(current.userId).map { it?.toDomain() }
+    val session = settings.session
+    val appSettings = settings.settings
+    val profile: Flow<User?> = session.flatMapLatest { current ->
+        if (current == null) flowOf(null) else database.userDao().observeById(current.userId).map { it?.toDomain() }
+    }
+    suspend fun register(name: String, email: String, password: String, confirmation: String): VibeResult<User> {
+        Validators.displayName(name)?.let { return VibeResult.Problem(it) }
+        Validators.email(email)?.let { return VibeResult.Problem(it) }
+        Validators.password(password)?.let { return VibeResult.Problem(it) }
+        Validators.passwordConfirmation(password, confirmation)?.let { return VibeResult.Problem(it) }
+        if (!queue.isOnline()) return VibeResult.Problem(kind = ApiErrorKind.NETWORK, detail = "Connect to the internet to create an account.")
+        return when (val r = apiResult { api.register(RegisterRequest(name.trim(), email.trim(), password)) }) {
+            is ApiResult.Success -> signIn(r.data)
+            is ApiResult.Failure -> r.toProblem()
         }
     }
-
-    suspend fun register(displayName: String, email: String, password: String, confirmation: String): VibeResult<User> {
-        Validators.displayName(displayName)?.let { return VibeResult.Problem(error = it) }
-        Validators.email(email)?.let { return VibeResult.Problem(error = it) }
-        Validators.password(password)?.let { return VibeResult.Problem(error = it) }
-        Validators.passwordConfirmation(password, confirmation)?.let { return VibeResult.Problem(error = it) }
-
-        return when (val result = apiResult { api.register(RegisterRequest(displayName.trim(), email.trim(), password)) }) {
-            is ApiResult.Success -> signIn(result.data.accessToken, result.data.refreshToken, result.data.user.toDomain())
-            is ApiResult.Failure -> result.toProblem()
-        }
-    }
-
     suspend fun login(email: String, password: String): VibeResult<User> {
-        Validators.email(email)?.let { return VibeResult.Problem(error = it) }
-        return when (val result = apiResult { api.login(LoginRequest(email.trim(), password)) }) {
-            is ApiResult.Success -> signIn(result.data.accessToken, result.data.refreshToken, result.data.user.toDomain())
-            is ApiResult.Failure -> result.toProblem()
+        Validators.email(email)?.let { return VibeResult.Problem(it) }
+        // An existing session may reopen offline; a new password is never accepted offline.
+        val cached = settings.currentSession()
+        if (cached?.email.equals(email.trim(), true) && !queue.isOnline()) return profileNow()?.let { VibeResult.Ok(it) }
+            ?: VibeResult.Problem(kind = ApiErrorKind.NETWORK)
+        return when (val r = apiResult { api.login(LoginRequest(email.trim(), password)) }) {
+            is ApiResult.Success -> signIn(r.data)
+            is ApiResult.Failure -> r.toProblem()
         }
     }
-
-    /** PoE: Google Sign-In. The ID token is verified by the API, never on the device. */
-    suspend fun signInWithGoogle(idToken: String): VibeResult<User> {
-        if (idToken.isBlank()) return VibeResult.Problem(detail = "Missing Google ID token")
-        return when (val result = apiResult { api.googleSignIn(GoogleAuthRequest(idToken)) }) {
-            is ApiResult.Success -> signIn(result.data.accessToken, result.data.refreshToken, result.data.user.toDomain())
-            is ApiResult.Failure -> result.toProblem()
-        }
+    suspend fun signInWithGoogle(token: String): VibeResult<User> = when (val r = apiResult { api.googleSignIn(GoogleAuthRequest(token)) }) {
+        is ApiResult.Success -> signIn(r.data)
+        is ApiResult.Failure -> r.toProblem()
     }
-
-    private suspend fun signIn(accessToken: String, refreshToken: String, user: User): VibeResult<User> {
+    private suspend fun signIn(response: AuthResponse): VibeResult<User> {
+        val user = response.user.toDomain()
+        val oldId = settings.currentUserId()
+        if (oldId != null && oldId != user.id && database.syncQueueDao().count() > 0) return VibeResult.Problem(detail = "Sync the current account before switching accounts.")
+        if (oldId != null && oldId != user.id) withContext(Dispatchers.IO) { database.clearAllTables(); media?.photos?.clear() }
         database.userDao().upsert(user.toEntity())
-        settings.saveSession(
-            Session(
-                userId = user.id,
-                displayName = user.displayName,
-                email = user.email,
-                accessToken = accessToken,
-                refreshToken = refreshToken,
-            ),
-        )
-        // The cached profile is refreshed in the background; a failure here does
-        // not block sign-in because RoomDB already has a usable copy.
-        refreshProfile()
+        settings.saveSession(Session(user.id, user.displayName, user.email, response.accessToken, response.refreshToken, response.expiresAtEpochMillis))
+        settings.setPhotoUri(user.photoUri)
         return VibeResult.Ok(user)
     }
-
-    suspend fun logout() {
-        apiResult { api.logout() }
+    suspend fun deleteAccount(password: String?): VibeResult<Unit> {
+        if (database.syncQueueDao().count() > 0) return VibeResult.Problem(detail = "Sync all changes before deleting your account.")
+        return when (val r = apiResult { api.deleteAccount(DeleteAccountRequest(password?.takeIf { it.isNotBlank() })) }) {
+            is ApiResult.Success -> { settings.clearSession(); settings.setPhotoUri(null); withContext(Dispatchers.IO) { database.clearAllTables() }; media?.photos?.clear(); VibeResult.Ok(Unit) }
+            is ApiResult.Failure -> r.toProblem()
+        }
+    }
+    suspend fun logout(): VibeResult<Unit> {
+        if (database.syncQueueDao().count() > 0) return VibeResult.Problem(detail = "Sync or resolve pending changes before signing out. Your work has not been deleted.")
+        val token = settings.fcmToken()
+        if (queue.isOnline()) {
+            token?.let { apiResult { api.unregisterDevice(RegisterDeviceRequest(it)) } }
+            val r = apiResult { api.logout() }
+            if (r is ApiResult.Failure && r.kind != ApiErrorKind.NETWORK && r.kind != ApiErrorKind.UNAUTHORISED) return r.toProblem()
+        }
         settings.clearSession()
-        // Cached group data is member data: it is wiped so the next person on the
-        // device cannot read it. Pending offline work is kept out of the wipe only
-        // after a successful sync, which `SyncManager` attempts first.
+        settings.setPhotoUri(null)
         withContext(Dispatchers.IO) { database.clearAllTables() }
-    }
-
-    suspend fun refreshProfile(): VibeResult<User> =
-        when (val result = apiResult { api.me() }) {
-            is ApiResult.Success -> {
-                val user = result.data.toDomain()
-                database.userDao().upsert(user.toEntity())
-                settings.updateDisplayName(user.displayName)
-                VibeResult.Ok(user)
-            }
-
-            is ApiResult.Failure -> VibeResult.Problem(kind = result.kind, detail = result.message)
-        }
-
-    /**
-     * Profile edits are optimistic: the local copy and the session update
-     * immediately, the change goes into the offline queue, and the API is told
-     * when there is a connection.
-     */
-    suspend fun updateProfile(
-        displayName: String,
-        username: String?,
-        photoUri: String? = null,
-    ): VibeResult<User> {
-        Validators.displayName(displayName)?.let { return VibeResult.Problem(error = it) }
-        val current = profileNow() ?: return VibeResult.Problem(detail = "Not signed in")
-
-        val updated = current.copy(
-            displayName = displayName.trim(),
-            username = username?.trim().takeUnless { it.isNullOrBlank() } ?: current.username,
-            photoUri = photoUri ?: current.photoUri,
-        )
-        database.userDao().upsert(updated.toEntity())
-        settings.updateDisplayName(updated.displayName)
-        if (photoUri != null) settings.setPhotoUri(photoUri)
-
-        val payload = UpdateProfileRequest(
-            displayName = updated.displayName,
-            username = updated.username,
-            photoUri = updated.photoUri,
-        )
-        queue.enqueue(SyncAction.UPDATE_PROFILE, updated.id, payload, UpdateProfileRequest::class.java)
-
-        return when (val result = apiResult { api.updateProfile(payload) }) {
-            is ApiResult.Success -> VibeResult.Ok(result.data.toDomain())
-            // Saved locally; the queue will carry it to the API later.
-            is ApiResult.Failure -> VibeResult.Ok(updated)
-        }
-    }
-
-    suspend fun updateSettings(
-        themeMode: ThemeMode? = null,
-        language: AppLanguage? = null,
-        notificationsEnabled: Boolean? = null,
-        privacyMembersOnly: Boolean? = null,
-    ): VibeResult<Unit> {
-        themeMode?.let { settings.setTheme(it) }
-        language?.let { settings.setLanguage(it) }
-        notificationsEnabled?.let { settings.setNotificationsEnabled(it) }
-        privacyMembersOnly?.let { settings.setPrivacyMembersOnly(it) }
-
-        val payload = UpdateProfileRequest(
-            language = language?.tag,
-            themeMode = themeMode?.name,
-            notificationsEnabled = notificationsEnabled,
-            privacyMembersOnly = privacyMembersOnly,
-        )
-        val userId = settings.currentUserId() ?: return VibeResult.Ok(Unit)
-        queue.enqueue(SyncAction.UPDATE_PROFILE, "$userId-settings", payload, UpdateProfileRequest::class.java)
-        api.updateProfile(payload)
+        media?.photos?.clear()
         return VibeResult.Ok(Unit)
     }
-
-    suspend fun changePassword(currentPassword: String, newPassword: String, confirmation: String): VibeResult<Unit> {
-        if (currentPassword.isBlank()) {
-            return VibeResult.Problem(error = com.vibe.app.domain.FieldError.CURRENT_PASSWORD_REQUIRED)
-        }
-        Validators.password(newPassword)?.let { return VibeResult.Problem(error = it) }
-        Validators.passwordConfirmation(newPassword, confirmation)?.let { return VibeResult.Problem(error = it) }
-
-        return when (
-            val result = apiResult { api.changePassword(ChangePasswordRequest(currentPassword, newPassword)) }
-        ) {
-            is ApiResult.Success -> VibeResult.Ok(Unit)
-            is ApiResult.Failure -> result.toProblem()
+    suspend fun refreshProfile(): VibeResult<User> = when (val r = apiResult { api.me() }) {
+        is ApiResult.Success -> { if (database.syncQueueDao().count() == 0) database.userDao().upsert(r.data.toDomain().toEntity()); VibeResult.Ok(r.data.toDomain()) }
+        is ApiResult.Failure -> r.toProblem()
+    }
+    suspend fun updateProfile(displayName: String, username: String?, photoUri: String? = null): VibeResult<User> {
+        Validators.displayName(displayName)?.let { return VibeResult.Problem(it) }
+        val current = profileNow() ?: return VibeResult.Problem(detail = "Please sign in.")
+        val photo = photoUri?.let { media?.photos?.persist(it) ?: it } ?: current.photoUri
+        val updated = current.copy(displayName = displayName.trim(), username = username?.trim()?.takeIf { it.isNotEmpty() } ?: current.username, photoUri = photo)
+        database.userDao().upsert(updated.toEntity()); settings.updateDisplayName(updated.displayName); settings.setPhotoUri(photo)
+        val payload = UpdateProfileRequest(updated.displayName, updated.username, photoUri = photo)
+        val item = queue.enqueue(SyncAction.UPDATE_PROFILE, current.id, payload, UpdateProfileRequest::class.java)
+        return when (val r = onlineMutation(queue, item) { api.updateProfile(payload) }) {
+            is ApiResult.Success -> VibeResult.Ok(r.data.toDomain())
+            is ApiResult.Failure -> if (r.kind == ApiErrorKind.NETWORK || r.kind == ApiErrorKind.SERVER) VibeResult.Ok(updated) else r.toProblem()
         }
     }
-
+    suspend fun updateSettings(themeMode: ThemeMode? = null, language: AppLanguage? = null, notificationsEnabled: Boolean? = null, privacyMembersOnly: Boolean? = null): VibeResult<Unit> {
+        themeMode?.let { settings.setTheme(it) }; language?.let { settings.setLanguage(it) }
+        notificationsEnabled?.let { settings.setNotificationsEnabled(it) }; privacyMembersOnly?.let { settings.setPrivacyMembersOnly(it) }
+        val uid = settings.currentUserId() ?: return VibeResult.Ok(Unit)
+        val payload = UpdateProfileRequest(language = language?.tag, themeMode = themeMode?.name, notificationsEnabled = notificationsEnabled, privacyMembersOnly = privacyMembersOnly)
+        val item = queue.enqueue(SyncAction.UPDATE_PROFILE, "$uid-settings", payload, UpdateProfileRequest::class.java)
+        val r = onlineMutation(queue, item) { api.updateProfile(payload) }
+        return if (r is ApiResult.Success || (r is ApiResult.Failure && (r.kind == ApiErrorKind.NETWORK || r.kind == ApiErrorKind.SERVER))) VibeResult.Ok(Unit) else (r as ApiResult.Failure).toProblem()
+    }
+    suspend fun changePassword(current: String, fresh: String, confirmation: String): VibeResult<Unit> {
+        if (current.isBlank()) return VibeResult.Problem(FieldError.CURRENT_PASSWORD_REQUIRED)
+        Validators.password(fresh)?.let { return VibeResult.Problem(it) }
+        Validators.passwordConfirmation(fresh, confirmation)?.let { return VibeResult.Problem(it) }
+        return when (val r = apiResult { api.changePassword(ChangePasswordRequest(current, fresh)) }) {
+            is ApiResult.Success -> { signIn(r.data); VibeResult.Ok(Unit) }
+            is ApiResult.Failure -> r.toProblem()
+        }
+    }
     suspend fun requestPasswordReset(email: String): VibeResult<Unit> {
-        Validators.email(email)?.let { return VibeResult.Problem(error = it) }
-        return when (val result = apiResult { api.requestPasswordReset(com.vibe.app.data.remote.PasswordResetRequest(email.trim())) }) {
+        Validators.email(email)?.let { return VibeResult.Problem(it) }
+        return when (val r = apiResult { api.requestPasswordReset(PasswordResetRequest(email.trim())) }) {
             is ApiResult.Success -> VibeResult.Ok(Unit)
-            is ApiResult.Failure -> result.toProblem()
+            is ApiResult.Failure -> r.toProblem()
         }
     }
-
+    suspend fun providers(): VibeResult<ProvidersDto> = when (val r = apiResult { api.providers() }) { is ApiResult.Success -> VibeResult.Ok(r.data); is ApiResult.Failure -> r.toProblem() }
+    suspend fun linkGoogle(token: String): VibeResult<Unit> = when (val r = apiResult { api.linkGoogle(GoogleAuthRequest(token)) }) { is ApiResult.Success -> VibeResult.Ok(Unit); is ApiResult.Failure -> r.toProblem() }
+    suspend fun unlinkGoogle(): VibeResult<Unit> = when (val r = apiResult { api.unlinkGoogle() }) { is ApiResult.Success -> VibeResult.Ok(Unit); is ApiResult.Failure -> r.toProblem() }
     suspend fun markOnboarded() = settings.setOnboarded(true)
-
-    suspend fun setPhotoUri(uri: String?) = settings.setPhotoUri(uri)
-
-    suspend fun stats(userId: String): UserStats = UserStats(
-        decisions = database.decisionDao().countForMember(userId),
-        activities = database.activityDao().countByUser(userId),
-        groups = database.groupDao().membershipsOf(userId).size,
-    )
-
-    private suspend fun profileNow(): User? {
-        val id = settings.currentUserId() ?: return null
-        return database.userDao().byId(id)?.toDomain()
-    }
+    suspend fun stats(userId: String) = UserStats(database.decisionDao().countForMember(userId), database.activityDao().countByUser(userId), database.groupDao().membershipsOf(userId).size)
+    private suspend fun profileNow() = settings.currentUserId()?.let { database.userDao().byId(it)?.toDomain() }
 }

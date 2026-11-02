@@ -295,6 +295,9 @@ interface DecisionDao {
     @Query("SELECT * FROM decisions WHERE groupId = :groupId AND state = 'OPEN' ORDER BY startedAt DESC LIMIT 1")
     fun observeLatestOpen(groupId: String): Flow<DecisionEntity?>
 
+    @Query("SELECT id FROM decisions WHERE groupId = :groupId AND state = 'OPEN' ORDER BY startedAt DESC LIMIT 1")
+    suspend fun latestOpenId(groupId: String): String?
+
     @Query("SELECT * FROM decisions WHERE groupId = :groupId AND state = 'SETTLED' ORDER BY startedAt DESC LIMIT 1")
     fun observeLatestSettled(groupId: String): Flow<DecisionEntity?>
 
@@ -409,6 +412,12 @@ interface SyncQueueDao {
     @Query("SELECT * FROM sync_queue WHERE state = 'PENDING' ORDER BY queuedAt ASC")
     suspend fun pending(): List<SyncItemEntity>
 
+    @Query("SELECT * FROM sync_queue ORDER BY queuedAt ASC")
+    suspend fun all(): List<SyncItemEntity>
+
+    @Query("SELECT COUNT(*) FROM sync_queue")
+    suspend fun count(): Int
+
     @Query("SELECT * FROM sync_queue WHERE state = 'CONFLICT' ORDER BY queuedAt ASC")
     fun observeConflicts(): Flow<List<SyncItemEntity>>
 
@@ -435,6 +444,9 @@ interface SyncQueueDao {
 
     @Query("DELETE FROM sync_queue WHERE id = :id")
     suspend fun delete(id: String)
+
+    @Query("DELETE FROM sync_queue WHERE id = :id AND state = 'PENDING'")
+    suspend fun deleteIfPending(id: String)
 
     @Query("DELETE FROM sync_queue WHERE state = 'SYNCED'")
     suspend fun clearSynced()

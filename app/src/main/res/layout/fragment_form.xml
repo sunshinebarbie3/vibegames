@@ -1,0 +1,28 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android" layout_width="match_parent" layout_height="match_parent" fillViewport="true" background="@color/canvas" xmlns:app="http://schemas.android.com/apk/res-auto">
+  <LinearLayout android:orientation="vertical" android:padding="20dp" android:layout_width="match_parent" android:layout_height="wrap_content">
+    <TextView android:id="@+id/description" android:text="" android:textSize="16sp" android:textColor="@color/text_secondary" android:layout_width="match_parent" android:layout_height="wrap_content" android:lineSpacingExtra="4dp" />
+    <com.google.android.material.textfield.TextInputLayout android:id="@+id/nameBox" android:hint="@field_display_name" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp">
+      <com.google.android.material.textfield.TextInputEditText android:id="@+id/name" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="textCapSentences" android:maxLines="1" />
+    </com.google.android.material.textfield.TextInputLayout>
+    <com.google.android.material.textfield.TextInputLayout android:id="@+id/usernameBox" android:hint="@profile_username_label" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp">
+      <com.google.android.material.textfield.TextInputEditText android:id="@+id/username" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="textCapSentences" android:maxLines="1" />
+    </com.google.android.material.textfield.TextInputLayout>
+    <com.google.android.material.textfield.TextInputLayout android:id="@+id/descriptionInputBox" android:hint="@activity_description_hint" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp">
+      <com.google.android.material.textfield.TextInputEditText android:id="@+id/descriptionInput" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="textMultiLine|textCapSentences" android:maxLines="5" android:minLines="3" />
+    </com.google.android.material.textfield.TextInputLayout>
+    <com.google.android.material.textfield.TextInputLayout android:id="@+id/codeBox" android:hint="@join_code_hint" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp">
+      <com.google.android.material.textfield.TextInputEditText android:id="@+id/code" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="textCapSentences" android:maxLines="1" />
+    </com.google.android.material.textfield.TextInputLayout>
+    <com.google.android.material.button.MaterialButton android:id="@+id/pickIcon" android:text="@group_icon_label" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" style="Widget.Material3.Button.OutlinedButton" />
+    <com.google.android.material.button.MaterialButton android:id="@+id/photo" android:text="@memory_add_photo" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" style="Widget.Material3.Button.OutlinedButton" />
+    <ImageView android:id="@+id/photoPreview" android:contentDescription="@cd_memory_photo" android:layout_width="match_parent" android:layout_height="180dp" android:scaleType="centerCrop" android:visibility="gone" android:layout_marginTop="12dp" />
+    <com.google.android.material.button.MaterialButton android:id="@+id/dateTime" android:text="@plan_pick_datetime" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" style="Widget.Material3.Button.OutlinedButton" />
+    <TextView android:id="@+id/dateLabel" android:text="@plan_no_date" android:textSize="16sp" android:textColor="@color/text_primary" android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingTop="8dp" />
+    <RatingBar android:id="@+id/rating" android:numStars="5" android:stepSize="1.0" android:rating="0" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="12dp" />
+    <TextView android:id="@+id/error" android:text="" android:textSize="16sp" android:textColor="@color/vibe_coral" android:layout_width="match_parent" android:layout_height="wrap_content" android:visibility="gone" android:paddingTop="8dp" />
+    <com.google.android.material.button.MaterialButton android:id="@+id/primary" android:text="@action_save" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" style="Widget.Material3.Button" />
+    <com.google.android.material.button.MaterialButton android:id="@+id/secondary" android:text="@action_cancel" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" style="Widget.Material3.Button.TextButton" />
+    <com.google.android.material.progressindicator.LinearProgressIndicator android:id="@+id/progress" android:indeterminate="true" android:visibility="gone" android:layout_width="match_parent" android:layout_height="wrap_content" />
+  </LinearLayout>
+</ScrollView>

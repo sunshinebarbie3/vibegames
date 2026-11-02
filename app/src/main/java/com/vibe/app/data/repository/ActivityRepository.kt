@@ -54,7 +54,7 @@ class ActivityRepository(
     suspend fun refresh(groupId: String): VibeResult<Int> =
         when (val result = apiResult { api.activities(groupId) }) {
             is ApiResult.Success -> {
-                database.activityDao().upsert(result.data.map { it.toDomain().toEntity() })
+                if (database.syncQueueDao().count() == 0) database.activityDao().upsert(result.data.map { it.toDomain().toEntity() })
                 VibeResult.Ok(result.data.size)
             }
 
@@ -64,7 +64,7 @@ class ActivityRepository(
     suspend fun refreshMine(): VibeResult<Int> =
         when (val result = apiResult { api.myActivities() }) {
             is ApiResult.Success -> {
-                database.activityDao().upsert(result.data.map { it.toDomain().toEntity() })
+                if (database.syncQueueDao().count() == 0) database.activityDao().upsert(result.data.map { it.toDomain().toEntity() })
                 VibeResult.Ok(result.data.size)
             }
 
@@ -104,16 +104,16 @@ class ActivityRepository(
             clientId = local.id,
             groupId = local.groupId,
         )
-        queue.enqueue(SyncAction.ADD_ACTIVITY, local.id, payload, UpsertActivityRequest::class.java)
+        val queued = queue.enqueue(SyncAction.ADD_ACTIVITY, local.id, payload, UpsertActivityRequest::class.java)
 
-        return when (val result = apiResult { api.addActivity(groupId, payload) }) {
+        return when (val result = com.vibe.app.data.sync.onlineMutation(queue, queued) { api.addActivity(groupId, payload) }) {
             is ApiResult.Success -> {
                 val saved = result.data.toDomain()
                 database.activityDao().upsert(saved.toEntity())
                 VibeResult.Ok(saved)
             }
 
-            is ApiResult.Failure -> VibeResult.Ok(local)
+            is ApiResult.Failure -> if (result.kind == ApiErrorKind.NETWORK || result.kind == ApiErrorKind.SERVER) VibeResult.Ok(local) else result.toProblem()
         }
     }
 
@@ -141,9 +141,9 @@ class ActivityRepository(
             clientId = updated.id,
             groupId = updated.groupId,
         )
-        queue.enqueue(SyncAction.UPDATE_ACTIVITY, updated.id, payload, UpsertActivityRequest::class.java)
+        val queued = queue.enqueue(SyncAction.UPDATE_ACTIVITY, updated.id, payload, UpsertActivityRequest::class.java)
 
-        return when (val result = apiResult { api.updateActivity(updated.id, payload) }) {
+        return when (val result = com.vibe.app.data.sync.onlineMutation(queue, queued) { api.updateActivity(updated.id, payload) }) {
             is ApiResult.Success -> {
                 val saved = result.data.toDomain()
                 database.activityDao().upsert(saved.toEntity())
@@ -175,8 +175,8 @@ class ActivityRepository(
     suspend fun deleteActivity(activityId: String): VibeResult<Unit> {
         database.activityDao().delete(activityId)
         val payload = UpsertActivityRequest(title = "", icon = "")
-        queue.enqueue(SyncAction.DELETE_ACTIVITY, activityId, payload, UpsertActivityRequest::class.java)
-        return when (val result = apiResult { api.deleteActivity(activityId) }) {
+        val queued = queue.enqueue(SyncAction.DELETE_ACTIVITY, activityId, payload, UpsertActivityRequest::class.java)
+        return when (val result = com.vibe.app.data.sync.onlineMutation(queue, queued) { api.deleteActivity(activityId) }) {
             is ApiResult.Success -> VibeResult.Ok(Unit)
             is ApiResult.Failure -> if (result.kind == ApiErrorKind.NETWORK) {
                 queuedOfflineResult()

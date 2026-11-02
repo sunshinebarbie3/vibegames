@@ -20,6 +20,8 @@ class SyncQueue(
     private val moshi: Moshi,
     private val time: TimeProvider,
 ) {
+    var isOnline: suspend () -> Boolean = { true }
+    var changed: suspend () -> Unit = {}
 
     suspend fun <T : Any> enqueue(action: SyncAction, entityId: String, payload: T, type: Class<T>): SyncItemEntity {
         val queuedAt = time.nowMillis()
@@ -35,6 +37,7 @@ class SyncQueue(
             serverPayloadJson = null,
         )
         database.syncQueueDao().upsert(item)
+        changed()
         return item
     }
 

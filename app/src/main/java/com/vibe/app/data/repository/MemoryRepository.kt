@@ -29,9 +29,9 @@ import kotlinx.coroutines.flow.map
  * Plans and Memories: setting the date, marking a plan done, and the photos,
  * caption and group rating that make the memory.
  *
- * Photos stay on the device in the PoE build (the URI is stored with the memory
- * and rendered with Coil). A deployed API accepts uploaded URLs for the same
- * field, so switching to Azure Blob Storage later needs no schema change.
+ * Selected photos are copied into private app storage immediately. The sync queue
+ * uploads them to private Firebase Storage through the REST API before saving
+ * their opaque blob references in Firestore.
  */
 class MemoryRepository(
     private val api: VibeApi,
@@ -39,6 +39,7 @@ class MemoryRepository(
     private val queue: SyncQueue,
     private val settings: SettingsStore,
     private val time: TimeProvider,
+    private val media: MediaRepository? = null,
 ) {
 
     val memories: Flow<List<Memory>> =
@@ -56,7 +57,7 @@ class MemoryRepository(
     suspend fun refreshMemories(groupId: String): VibeResult<Int> =
         when (val result = apiResult { api.memories(groupId) }) {
             is ApiResult.Success -> {
-                database.memoryDao().upsert(result.data.map { it.toDomain().toEntity() })
+                if (database.syncQueueDao().count() == 0) database.memoryDao().upsert(result.data.map { it.toDomain().toEntity() })
                 VibeResult.Ok(result.data.size)
             }
 
@@ -66,7 +67,7 @@ class MemoryRepository(
     suspend fun refreshPlans(groupId: String): VibeResult<Int> =
         when (val result = apiResult { api.plans(groupId) }) {
             is ApiResult.Success -> {
-                result.data.forEach { database.planDao().upsert(it.toDomain().toEntity()) }
+                if (database.syncQueueDao().count() == 0) result.data.forEach { database.planDao().upsert(it.toDomain().toEntity()) }
                 VibeResult.Ok(result.data.size)
             }
 
@@ -92,17 +93,17 @@ class MemoryRepository(
         )
         database.planDao().upsert(plan.toEntity())
 
-        val payload = SavePlanRequest(groupId, activityId, scheduledAtEpochMillis)
-        queue.enqueue(SyncAction.SAVE_PLAN, plan.id, payload, SavePlanRequest::class.java)
+        val payload = SavePlanRequest(groupId, activityId, scheduledAtEpochMillis, plan.id)
+        val queued = queue.enqueue(SyncAction.SAVE_PLAN, plan.id, payload, SavePlanRequest::class.java)
 
-        return when (val result = apiResult { api.savePlan(payload) }) {
+        return when (val result = com.vibe.app.data.sync.onlineMutation(queue, queued) { api.savePlan(payload) }) {
             is ApiResult.Success -> {
                 val saved = result.data.toDomain()
                 database.planDao().upsert(saved.toEntity())
                 VibeResult.Ok(saved)
             }
 
-            is ApiResult.Failure -> VibeResult.Ok(plan)
+            is ApiResult.Failure -> if (result.kind == ApiErrorKind.NETWORK || result.kind == ApiErrorKind.SERVER) VibeResult.Ok(plan) else result.toProblem()
         }
     }
 
@@ -116,6 +117,7 @@ class MemoryRepository(
         Validators.rating(rating)?.let { return VibeResult.Problem(error = it) }
         Validators.caption(caption)?.let { return VibeResult.Problem(error = it) }
         val userId = settings.currentUserId() ?: return VibeResult.Problem(detail = "Not signed in")
+        val persistedPhotos = photoUris.map { media?.photos?.persist(it) ?: it }
         val plan = database.planDao().byId(planId) ?: return VibeResult.Problem(detail = "Plan not found")
 
         val now = time.nowMillis()
@@ -129,7 +131,7 @@ class MemoryRepository(
             completedAtEpochMillis = now,
             caption = caption.trim(),
             rating = rating,
-            photoUris = photoUris,
+            photoUris = persistedPhotos,
             createdBy = userId,
             syncState = SyncState.PENDING,
         )
@@ -141,13 +143,14 @@ class MemoryRepository(
         val payload = CompletePlanRequest(
             rating = rating,
             caption = memory.caption,
-            photoUris = photoUris,
+            photoUris = persistedPhotos,
             planId = planId,
             groupId = memory.groupId,
+            clientId = memory.id,
         )
-        queue.enqueue(SyncAction.COMPLETE_PLAN, planId, payload, CompletePlanRequest::class.java)
+        val queued = queue.enqueue(SyncAction.COMPLETE_PLAN, planId, payload, CompletePlanRequest::class.java)
 
-        return when (val result = apiResult { api.completePlan(planId, payload) }) {
+        return when (val result = com.vibe.app.data.sync.onlineMutation(queue, queued) { api.completePlan(planId, payload) }) {
             is ApiResult.Success -> {
                 val saved = result.data.toDomain()
                 database.memoryDao().upsert(saved.toEntity())
@@ -164,11 +167,8 @@ class MemoryRepository(
 
     /** Adds a photo to an existing memory (device URI in the PoE build). */
     suspend fun addPhoto(memoryId: String, photoUri: String): VibeResult<Memory> {
-        val entity = database.memoryDao().byId(memoryId) ?: return VibeResult.Problem(detail = "Memory not found")
-        val memory = entity.toDomain()
-        val updated = memory.copy(photoUris = memory.photoUris + photoUri, syncState = SyncState.PENDING)
-        database.memoryDao().upsert(updated.toEntity())
-        return VibeResult.Ok(updated)
+        val memory = database.memoryDao().byId(memoryId)?.toDomain() ?: return VibeResult.Problem(detail = "Memory not found")
+        return updateMemory(memoryId, memory.rating, memory.caption, memory.photoUris + photoUri)
     }
 
     /** Edits an existing memory (caption, rating, photos). */
@@ -180,11 +180,12 @@ class MemoryRepository(
     ): VibeResult<Memory> {
         Validators.rating(rating)?.let { return VibeResult.Problem(error = it) }
         Validators.caption(caption)?.let { return VibeResult.Problem(error = it) }
+        val persistedPhotos = photoUris.map { media?.photos?.persist(it) ?: it }
         val entity = database.memoryDao().byId(memoryId) ?: return VibeResult.Problem(detail = "Memory not found")
         val updated = entity.toDomain().copy(
             rating = rating,
             caption = caption.trim(),
-            photoUris = photoUris,
+            photoUris = persistedPhotos,
             syncState = SyncState.PENDING,
         )
         database.memoryDao().upsert(updated.toEntity())
@@ -192,19 +193,19 @@ class MemoryRepository(
         val payload = CompletePlanRequest(
             rating = rating,
             caption = updated.caption,
-            photoUris = photoUris,
+            photoUris = persistedPhotos,
             planId = entity.planId,
             groupId = updated.groupId,
         )
-        queue.enqueue(SyncAction.SAVE_MEMORY, memoryId, payload, CompletePlanRequest::class.java)
-        return when (val result = apiResult { api.completePlan(entity.planId, payload) }) {
+        val queued = queue.enqueue(SyncAction.SAVE_MEMORY, memoryId, payload, CompletePlanRequest::class.java)
+        return when (val result = com.vibe.app.data.sync.onlineMutation(queue, queued) { api.updateMemory(memoryId, payload) }) {
             is ApiResult.Success -> {
                 val saved = result.data.toDomain()
                 database.memoryDao().upsert(saved.toEntity())
                 VibeResult.Ok(saved)
             }
 
-            is ApiResult.Failure -> VibeResult.Ok(updated)
+            is ApiResult.Failure -> if (result.kind == ApiErrorKind.NETWORK || result.kind == ApiErrorKind.SERVER) VibeResult.Ok(updated) else result.toProblem()
         }
     }
 

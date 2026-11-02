@@ -1,0 +1,25 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android" layout_width="match_parent" layout_height="match_parent" fillViewport="true" background="@color/canvas" xmlns:app="http://schemas.android.com/apk/res-auto">
+  <LinearLayout android:orientation="vertical" android:padding="20dp" android:layout_width="match_parent" android:layout_height="wrap_content">
+    <TextView android:id="@+id/heading" android:text="@login_title" android:textSize="28sp" android:textColor="@color/text_primary" android:layout_width="match_parent" android:layout_height="wrap_content" android:textStyle="bold" />
+    <TextView android:id="@+id/subtitle" android:text="@login_subtitle" android:textSize="16sp" android:textColor="@color/text_secondary" android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingTop="8dp" />
+    <com.google.android.material.textfield.TextInputLayout android:id="@+id/displayNameBox" android:hint="@field_display_name" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp">
+      <com.google.android.material.textfield.TextInputEditText android:id="@+id/displayName" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="textCapSentences" android:maxLines="1" />
+    </com.google.android.material.textfield.TextInputLayout>
+    <com.google.android.material.textfield.TextInputLayout android:id="@+id/emailBox" android:hint="@field_email" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp">
+      <com.google.android.material.textfield.TextInputEditText android:id="@+id/email" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="textEmailAddress" android:maxLines="1" />
+    </com.google.android.material.textfield.TextInputLayout>
+    <com.google.android.material.textfield.TextInputLayout android:id="@+id/passwordBox" android:hint="@field_password" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" app:endIconMode="password_toggle">
+      <com.google.android.material.textfield.TextInputEditText android:id="@+id/password" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="textPassword" android:maxLines="1" />
+    </com.google.android.material.textfield.TextInputLayout>
+    <com.google.android.material.textfield.TextInputLayout android:id="@+id/confirmationBox" android:hint="@field_confirm_password" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" app:endIconMode="password_toggle">
+      <com.google.android.material.textfield.TextInputEditText android:id="@+id/confirmation" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="textPassword" android:maxLines="1" />
+    </com.google.android.material.textfield.TextInputLayout>
+    <TextView android:id="@+id/error" android:text="" android:textSize="14sp" android:textColor="@color/vibe_coral" android:layout_width="match_parent" android:layout_height="wrap_content" android:visibility="gone" android:paddingTop="8dp" />
+    <com.google.android.material.button.MaterialButton android:id="@+id/primary" android:text="@action_login" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" style="Widget.Material3.Button" />
+    <com.google.android.material.button.MaterialButton android:id="@+id/google" android:text="@action_google" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" style="Widget.Material3.Button.OutlinedButton" />
+    <com.google.android.material.button.MaterialButton android:id="@+id/switchMode" android:text="@action_register" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" style="Widget.Material3.Button.TextButton" />
+    <com.google.android.material.button.MaterialButton android:id="@+id/forgot" android:text="@password_forgot" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" style="Widget.Material3.Button.TextButton" />
+    <com.google.android.material.progressindicator.LinearProgressIndicator android:id="@+id/progress" android:indeterminate="true" android:visibility="gone" android:layout_width="match_parent" android:layout_height="wrap_content" />
+  </LinearLayout>
+</ScrollView>

@@ -84,6 +84,7 @@ class VibeMessagingService : FirebaseMessagingService() {
 
         val intent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra(EXTRA_OPEN_INBOX, true)
         }
         val pendingIntent = PendingIntent.getActivity(
             this,
@@ -106,6 +107,7 @@ class VibeMessagingService : FirebaseMessagingService() {
 
     companion object {
         const val CHANNEL_PLANS = "vibe_plans"
+        const val EXTRA_OPEN_INBOX = "open_inbox"
 
         /** Called from the application and from the service before posting. */
         fun ensureChannel(context: Context) {

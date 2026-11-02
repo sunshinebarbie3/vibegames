@@ -23,10 +23,14 @@ import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.PATCH
 import retrofit2.http.POST
+import retrofit2.http.Multipart
+import retrofit2.http.Part
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
 import retrofit2.http.Path
 
 /**
- * The custom ASP.NET Core REST API contract (design document, section 5).
+ * The Firebase-backed REST API contract (design document, section 5).
  *
  * Conventions, mirrored by `api-container/`:
  *  - JSON, camelCase field names, all timestamps are epoch milliseconds (UTC);
@@ -59,6 +63,9 @@ interface VibeApi {
 
     // ----- Account and settings -----
 
+    @retrofit2.http.HTTP(method="DELETE",path="api/v1/users/me",hasBody=true)
+    suspend fun deleteAccount(@Body body: DeleteAccountRequest): Response<Unit>
+
     @GET("api/v1/users/me")
     suspend fun me(): UserDto
 
@@ -66,7 +73,23 @@ interface VibeApi {
     suspend fun updateProfile(@Body body: UpdateProfileRequest): UserDto
 
     @POST("api/v1/users/me/password")
-    suspend fun changePassword(@Body body: ChangePasswordRequest): Response<Unit>
+    suspend fun changePassword(@Body body: ChangePasswordRequest): AuthResponse
+
+    @GET("api/v1/auth/providers")
+    suspend fun providers(): ProvidersDto
+
+    @POST("api/v1/auth/google/link")
+    suspend fun linkGoogle(@Body body: GoogleAuthRequest): UserDto
+
+    @retrofit2.http.HTTP(method = "DELETE", path = "api/v1/auth/google/link", hasBody = false)
+    suspend fun unlinkGoogle(): Response<Unit>
+
+    @POST("api/v1/devices/unregister")
+    suspend fun unregisterDevice(@Body body: RegisterDeviceRequest): Response<Unit>
+
+    @Multipart
+    @POST("api/v1/media")
+    suspend fun uploadPhoto(@Part photo: MultipartBody.Part, @Part("groupId") groupId: RequestBody?): MediaDto
 
     // ----- Groups and the Vibe List -----
 
@@ -81,6 +104,9 @@ interface VibeApi {
 
     @POST("api/v1/groups/join")
     suspend fun joinGroup(@Body body: JoinGroupRequest): GroupDto
+
+    @DELETE("api/v1/groups/{groupId}")
+    suspend fun deleteGroup(@Path("groupId") id: String): Response<Unit>
 
     @POST("api/v1/groups/{groupId}/leave")
     suspend fun leaveGroup(@Path("groupId") groupId: String): Response<Unit>
@@ -149,6 +175,9 @@ interface VibeApi {
     @GET("api/v1/groups/{groupId}/memories")
     suspend fun memories(@Path("groupId") groupId: String): List<MemoryDto>
 
+    @PATCH("api/v1/memories/{memoryId}")
+    suspend fun updateMemory(@Path("memoryId") id: String, @Body body: CompletePlanRequest): MemoryDto
+
     // ----- Alerts, devices and offline sync -----
 
     @GET("api/v1/notifications")
@@ -172,6 +201,7 @@ interface VibeApi {
 
 data class RegisterRequest(val displayName: String, val email: String, val password: String)
 data class LoginRequest(val email: String, val password: String)
+data class DeleteAccountRequest(val currentPassword: String? = null)
 data class GoogleAuthRequest(val idToken: String)
 data class RefreshRequest(val refreshToken: String)
 data class PasswordResetRequest(val email: String)
@@ -209,6 +239,7 @@ data class StartDecisionRequest(
     val clientId: String? = null,
     /** The group the round runs in; carried so a queued start can be applied. */
     val groupId: String? = null,
+    val roundNumber: Int = 1,
 )
 
 data class CastVoteRequest(
@@ -220,7 +251,7 @@ data class CastVoteRequest(
 )
 
 data class SurpriseRequest(val rejectedIds: List<String> = emptyList())
-data class SavePlanRequest(val groupId: String, val activityId: String, val scheduledAtEpochMillis: Long?)
+data class SavePlanRequest(val groupId: String, val activityId: String, val scheduledAtEpochMillis: Long?, val clientId: String? = null)
 data class CompletePlanRequest(
     val rating: Int,
     val caption: String,
@@ -228,6 +259,7 @@ data class CompletePlanRequest(
     /** Carried so a memory queued offline can be attached to its plan. */
     val planId: String? = null,
     val groupId: String? = null,
+    val clientId: String? = null,
 )
 data class RegisterDeviceRequest(val fcmToken: String, val platform: String = "android")
 
@@ -249,6 +281,9 @@ data class AuthResponse(
     val expiresAtEpochMillis: Long,
     val user: UserDto,
 )
+
+data class ProvidersDto(val providers: List<String> = emptyList(), val hasPassword: Boolean = false)
+data class MediaDto(val id: String, val uri: String)
 
 data class UserDto(
     val id: String,
@@ -324,7 +359,11 @@ data class DecisionDto(
     val canCloseEarly: Boolean = false,
     /** "inProgress" | "winner" | "continue" | "tie" | "none" */
     val outcome: String? = null,
+    val activityIds: List<String> = emptyList(),
+    val myVotes: List<MyVoteDto> = emptyList(),
 )
+
+data class MyVoteDto(val activityId: String, val choice: Boolean, val epochMillis: Long)
 
 data class VoteAckDto(val voteId: String, val decision: DecisionDto)
 

@@ -12,6 +12,13 @@ import com.vibe.app.domain.ThemeMode
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 private val Context.vibeDataStore: DataStore<Preferences> by preferencesDataStore(name = "vibe_settings")
 
@@ -22,6 +29,7 @@ data class Session(
     val email: String,
     val accessToken: String,
     val refreshToken: String,
+    val expiresAtEpochMillis: Long = 0L,
 )
 
 /** Locally owned settings: theme, language, alerts, privacy and onboarding. */
@@ -44,6 +52,14 @@ data class AppSettings(
 class SettingsStore(context: Context) {
 
     private val store = context.applicationContext.vibeDataStore
+    private val vault = TokenVault(context.applicationContext)
+    private val tokenVersion = MutableStateFlow(0)
+    init {
+        // Migrate plaintext tokens from v1, then remove the old values.
+        CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
+            store.edit { it.remove(Keys.ACCESS_TOKEN); it.remove(Keys.REFRESH_TOKEN) }
+        }
+    }
 
     private object Keys {
         val USER_ID = stringPreferencesKey("user_id")
@@ -51,6 +67,7 @@ class SettingsStore(context: Context) {
         val USER_EMAIL = stringPreferencesKey("user_email")
         val ACCESS_TOKEN = stringPreferencesKey("access_token")
         val REFRESH_TOKEN = stringPreferencesKey("refresh_token")
+        val EXPIRES_AT = androidx.datastore.preferences.core.longPreferencesKey("expires_at")
         val THEME = stringPreferencesKey("theme_mode")
         val LANGUAGE = stringPreferencesKey("language")
         val NOTIFICATIONS = booleanPreferencesKey("notifications_enabled")
@@ -60,14 +77,15 @@ class SettingsStore(context: Context) {
         val FCM_TOKEN = stringPreferencesKey("fcm_token")
     }
 
-    val session: Flow<Session?> = store.data.map { prefs ->
+    val session: Flow<Session?> = kotlinx.coroutines.flow.combine(store.data, tokenVersion) { prefs, _ ->
         val userId = prefs[Keys.USER_ID] ?: return@map null
         Session(
             userId = userId,
             displayName = prefs[Keys.USER_NAME].orEmpty(),
             email = prefs[Keys.USER_EMAIL].orEmpty(),
-            accessToken = prefs[Keys.ACCESS_TOKEN].orEmpty(),
-            refreshToken = prefs[Keys.REFRESH_TOKEN].orEmpty(),
+            accessToken = vault.access(),
+            refreshToken = vault.refresh(),
+            expiresAtEpochMillis = prefs[Keys.EXPIRES_AT] ?: 0L,
         )
     }
 
@@ -85,30 +103,35 @@ class SettingsStore(context: Context) {
 
     suspend fun currentUserId(): String? = store.data.first()[Keys.USER_ID]
 
-    suspend fun currentAccessToken(): String? = store.data.first()[Keys.ACCESS_TOKEN]
+    suspend fun currentAccessToken(): String? = vault.access().takeIf { it.isNotBlank() }
 
-    suspend fun saveSession(session: Session) {
+    suspend fun currentSession(): Session? = session.first()
+
+    suspend fun saveSession(session: Session) = withContext(Dispatchers.IO) {
+        vault.save(session.accessToken, session.refreshToken)
         store.edit { prefs ->
             prefs[Keys.USER_ID] = session.userId
             prefs[Keys.USER_NAME] = session.displayName
             prefs[Keys.USER_EMAIL] = session.email
-            prefs[Keys.ACCESS_TOKEN] = session.accessToken
-            prefs[Keys.REFRESH_TOKEN] = session.refreshToken
+            prefs[Keys.EXPIRES_AT] = session.expiresAtEpochMillis
+            
         }
+        tokenVersion.update { it + 1 }
     }
 
     suspend fun updateDisplayName(name: String) {
         store.edit { it[Keys.USER_NAME] = name }
     }
 
-    suspend fun clearSession() {
+    suspend fun clearSession() = withContext(Dispatchers.IO) {
+        vault.clear()
         store.edit { prefs ->
             prefs.remove(Keys.USER_ID)
             prefs.remove(Keys.USER_NAME)
             prefs.remove(Keys.USER_EMAIL)
-            prefs.remove(Keys.ACCESS_TOKEN)
-            prefs.remove(Keys.REFRESH_TOKEN)
+            prefs.remove(Keys.EXPIRES_AT)
         }
+        tokenVersion.update { it + 1 }
     }
 
     suspend fun setTheme(mode: ThemeMode) = store.edit { it[Keys.THEME] = mode.name }

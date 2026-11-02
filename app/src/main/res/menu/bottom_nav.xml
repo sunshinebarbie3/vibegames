@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/homeFragment" android:icon="@drawable/ic_nav_home" android:title="@string/cd_nav_home" />
+    <item android:id="@+id/groupsFragment" android:icon="@drawable/ic_nav_groups" android:title="@string/cd_nav_groups" />
+    <item android:id="@+id/quickAdd" android:icon="@drawable/ic_nav_add" android:title="@string/cd_quick_add" />
+    <item android:id="@+id/memoriesFragment" android:icon="@drawable/ic_nav_memories" android:title="@string/cd_nav_memories" />
+    <item android:id="@+id/profileFragment" android:icon="@drawable/ic_nav_profile" android:title="@string/cd_nav_profile" />
+</menu>
