@@ -65,6 +65,15 @@ jobs:
           if details: print('::error::Dependency/compiler details: '+' | '.join(details[:18]).replace('%','%25'))
           if start < 0:
               for s in (matched or lines[:80])[:18]: print('::error::'+s.replace('%','%25').replace('\r','%0D').replace('\n','%0A'))
+          report=Path('app/build/reports/lint-results-debug.xml')
+          if report.exists():
+              import xml.etree.ElementTree as ET
+              root=ET.parse(report).getroot()
+              for issue in root.findall('issue'):
+                  if issue.get('severity') == 'Error':
+                      loc=issue.find('location'); file=loc.get('file','') if loc is not None else ''
+                      line=loc.get('line','') if loc is not None else ''
+                      print('::error::Android lint '+str(issue.get('id'))+' '+file+':'+line+' '+str(issue.get('message')))
           PY
       - uses: actions/upload-artifact@v4
         if: always()
