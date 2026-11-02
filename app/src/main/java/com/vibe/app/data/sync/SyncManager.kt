@@ -13,6 +13,7 @@ import com.vibe.app.data.remote.*
 import com.vibe.app.data.repository.MediaRepository
 import com.vibe.app.domain.SyncState
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch

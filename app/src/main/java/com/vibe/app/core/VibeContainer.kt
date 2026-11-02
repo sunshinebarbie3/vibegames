@@ -14,6 +14,7 @@ import com.vibe.app.data.sync.*
 import com.vibe.app.identity.GoogleSignInGateway
 import com.vibe.app.identity.PushGateway
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
