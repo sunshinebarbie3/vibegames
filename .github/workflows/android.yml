@@ -50,6 +50,14 @@ jobs:
               if roots: print('::error::Kotlin compiler diagnostics: '+' | '.join(roots[-100:]).replace('%','%25').replace('\r',' ').replace('\n',' '))
               else:
                   print('::error::Kotlin build log excerpt: '+' | '.join(section[-80:]).replace('%','%25').replace('\r',' ').replace('\n',' '))
+          from pathlib import Path
+          daemon_logs=list(Path.home().glob('.kotlin/daemon/*.log'))+list(Path.home().glob('.gradle/daemon/*/*.out.log'))
+          for log in daemon_logs[-8:]:
+              try:
+                  text=log.read_text(errors='replace').splitlines()
+                  clues=[x.strip() for x in text if re.search(r'(Kotlin|compiler|daemon|exception|outofmemory|error|failed|caused by)',x,re.I)]
+                  if clues: print('::error::Daemon diagnostic '+str(log.name)+': '+' | '.join(clues[-12:]).replace('%','%25'))
+              except Exception: pass
           start=max((i for i,s in enumerate(lines) if s.strip()=='* What went wrong:'),default=-1)
           if start >= 0:
               for s in lines[start:start+90]: print('::error::'+s.replace('%','%25').replace('\r','%0D').replace('\n','%0A'))
