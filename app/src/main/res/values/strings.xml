@@ -94,7 +94,7 @@
   <string name="join_group_confirm">You are about to join %1$s. Members of this group can see the activities you add.</string>
   <string name="action_join_group">Join group</string>
   <string name="group_joined_message">You joined %1$s</string>
-  <string name="group_invite_code">Invite code</string>
+  <string name="group_invite_code">Invite code: %1$s</string>
   <string name="group_share_invite">Share invite code</string>
   <string name="group_code_copied">Invite code copied</string>
   <string name="group_share_text">Join %1$s on VIBE with the code %2$s</string>

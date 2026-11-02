@@ -81,7 +81,7 @@
   <string name="join_group_hint">Botsa setho bakeng sa khoutu ya ditlhaku tse 6.</string>
   <string name="join_group_confirm">O tla kena ho %1$s. Ditho tsa sehlopha sena di tla bona mesebetsi eo o e eketsang.</string>
   <string name="action_join_group">Kena sehlopheng</string>
-  <string name="group_invite_code">Khoutu ya memo</string>
+  <string name="group_invite_code">Khoutu ya memo: %1$s</string>
   <string name="group_share_invite">Arolelana khoutu ya memo</string>
   <string name="group_code_copied">Khoutu ya memo e kopitsitswe</string>
   <string name="group_start_decision">Qala qeto</string>

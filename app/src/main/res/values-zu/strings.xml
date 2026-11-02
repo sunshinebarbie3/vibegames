@@ -81,7 +81,7 @@
   <string name="join_group_hint">Buza ilungu ngekhodi enezinhlamvu eziyisithupha.</string>
   <string name="join_group_confirm">Usuzojuoyina i-%1$s. Amalungu alo qembu azobona imisebenzi oyengezayo.</string>
   <string name="action_join_group">Joyina iqembu</string>
-  <string name="group_invite_code">Ikhodi yesimemo</string>
+  <string name="group_invite_code">Ikhodi yesimemo: %1$s</string>
   <string name="group_share_invite">Yabelana ngekhodi yesimemo</string>
   <string name="group_code_copied">Ikhodi yesimemo ikopishiwe</string>
   <string name="group_start_decision">Qala isinqumo</string>
