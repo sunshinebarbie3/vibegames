@@ -49,12 +49,12 @@ class FormFragment : Fragment(R.layout.fragment_form) {
         listOf<View>(b.nameBox,b.usernameBox,b.descriptionInputBox,b.codeBox,b.pickIcon,b.photo,b.photoPreview,b.dateTime,b.dateLabel,b.rating,b.secondary).forEach { it.visibility = View.GONE }
         b.primary.setText(R.string.action_save)
         when (mode) {
-            "createGroup" -> { b.nameBox.setHint(R.string.group_name_label); show(b.nameBox,b.pickIcon); b.description.setText(R.string.group_create_help) }
+            "createGroup" -> { b.nameBox.hint = getString(R.string.group_name_label); show(b.nameBox,b.pickIcon); b.description.setText(R.string.group_create_help) }
             "joinGroup" -> { show(b.codeBox); b.description.setText(R.string.join_help); b.primary.setText(R.string.action_join_group) }
-            "activity" -> { b.nameBox.setHint(R.string.activity_title_label); show(b.nameBox,b.descriptionInputBox,b.pickIcon); b.description.setText(R.string.activity_add_help) }
+            "activity" -> { b.nameBox.hint = getString(R.string.activity_title_label); show(b.nameBox,b.descriptionInputBox,b.pickIcon); b.description.setText(R.string.activity_add_help) }
             "profile" -> { show(b.nameBox,b.usernameBox,b.photo); b.description.setText(R.string.profile_photo_cloud_note) }
             "plan" -> { show(b.dateTime,b.dateLabel); b.description.setText(R.string.plan_pick_datetime); scheduled?.let { b.dateLabel.text = DateFormat.getDateTimeInstance().format(it) } }
-            "completePlan", "memory" -> { show(b.descriptionInputBox,b.photo,b.rating); b.descriptionInputBox.setHint(R.string.memory_caption_label); b.description.setText(R.string.memory_photo_pending); b.primary.setText(R.string.memory_save) }
+            "completePlan", "memory" -> { show(b.descriptionInputBox,b.photo,b.rating); b.descriptionInputBox.hint = getString(R.string.memory_caption_label); b.description.setText(R.string.memory_photo_pending); b.primary.setText(R.string.memory_save) }
         }
         b.pickIcon.text = "$icon  ${getString(R.string.group_icon_label)}"
         b.pickIcon.setOnClickListener {

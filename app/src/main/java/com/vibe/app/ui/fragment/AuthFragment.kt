@@ -42,7 +42,7 @@ class AuthFragment : Fragment(R.layout.fragment_auth) {
             }) { if (showResult(it)) (requireActivity() as MainActivity).signedIn() }
         }
         b.forgot.setOnClickListener {
-            val layout = TextInputLayout(requireContext()).apply { setHint(R.string.field_email) }
+            val layout = TextInputLayout(requireContext()).apply { hint = getString(R.string.field_email) }
             val field = TextInputEditText(layout.context).apply { inputType = android.text.InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS; setText(value(b.email)) }
             layout.addView(field)
             MaterialAlertDialogBuilder(requireContext()).setTitle(R.string.password_forgot).setView(layout).setNegativeButton(R.string.action_cancel, null).setPositiveButton(R.string.action_send) { _, _ ->

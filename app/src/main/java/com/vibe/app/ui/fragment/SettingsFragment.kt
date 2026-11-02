@@ -8,6 +8,7 @@ import android.provider.Settings
 import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.fragment.app.activityViewModels
 import com.google.android.material.chip.Chip
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -50,7 +51,7 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         b.logout.setOnClickListener { vm.signOut { showResult(it) } }
         b.deleteAccount.setOnClickListener {
             val field = com.google.android.material.textfield.TextInputEditText(requireContext()).apply { inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD }
-            val box = com.google.android.material.textfield.TextInputLayout(requireContext()).apply { setHint(R.string.field_current_password); addView(field) }
+            val box = com.google.android.material.textfield.TextInputLayout(requireContext()).apply { hint = getString(R.string.field_current_password); addView(field) }
             MaterialAlertDialogBuilder(requireContext()).setTitle(R.string.auth_account_delete).setMessage(R.string.auth_account_delete_confirm).setView(box).setNegativeButton(R.string.action_cancel,null).setPositiveButton(R.string.auth_account_delete) { _,_ ->
                 vm.action({ vm.c.authRepository.deleteAccount(field.text?.toString()) }) { showResult(it,R.string.auth_account_deleted) }
             }.show()
