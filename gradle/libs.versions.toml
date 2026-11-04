@@ -6,7 +6,7 @@
 # the decoupled 2.3.x line, because the older Kotlin-suffixed releases register
 # `kotlin.sourceSets` entries that built-in Kotlin rejects.
 [versions]
-agp = "9.2.1"
+agp = "9.0.0"
 kotlin = "2.4.20"
 ksp = "2.3.12"
 
@@ -15,7 +15,7 @@ appcompat = "1.7.1"
 activityCompose = "1.13.0"
 composeBom = "2026.06.01"
 materialIconsCore = "1.7.8"
-lifecycle = "2.11.0"
+lifecycle = "2.10.0"
 navigationCompose = "2.9.6"
 room = "2.8.4"
 datastore = "1.1.1"

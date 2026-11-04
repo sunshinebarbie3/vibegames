@@ -155,8 +155,11 @@ class ProfileViewModel(
     }
 
     fun setLanguage(language: AppLanguage) {
-        viewModelScope.launch { authRepository.updateSettings(language = language) }
-        LocaleManager.apply(language)
+        viewModelScope.launch {
+            // Persist first so Activity recreation cannot restore the previous locale.
+            authRepository.updateSettings(language = language)
+            LocaleManager.apply(language)
+        }
     }
 
     fun setNotificationsEnabled(enabled: Boolean) {
