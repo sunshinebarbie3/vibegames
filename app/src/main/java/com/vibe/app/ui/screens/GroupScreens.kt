@@ -115,6 +115,10 @@ class GroupViewModel(
         joinedGroup = null
     }
 
+    fun refreshActivities(groupId: String) {
+        viewModelScope.launch { activityRepository.refresh(groupId) }
+    }
+
     fun createGroup(name: String, icon: String) {
         error = null
         busy = true
@@ -439,7 +443,10 @@ fun GroupDetailScreen(
     val activities by viewModel.activities(groupId).collectAsStateWithLifecycle()
     val context = LocalContext.current
 
-    LaunchedEffect(groupId) { viewModel.clearMessages() }
+    LaunchedEffect(groupId) {
+        viewModel.clearMessages()
+        viewModel.refreshActivities(groupId)
+    }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -539,7 +546,7 @@ fun GroupDetailScreen(
                 if (group?.role == GroupRole.OWNER) {
                     PrimaryButton(
                         text = stringResource(R.string.group_start_decision),
-                        enabled = !viewModel.busy && activities.size >= 2,
+                        enabled = !viewModel.busy && activities.count { it.status.isEligibleForRounds } >= 2,
                         onClick = { viewModel.startDecision(groupId, onVote) },
                     )
                 } else {

@@ -187,7 +187,7 @@ fun HomeScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
-                    NotificationBell(unreadCount = if (unread == 0) 3 else unread, onClick = onOpenNotifications)
+                    NotificationBell(unreadCount = unread, onClick = onOpenNotifications)
                 }
             }
 
@@ -243,13 +243,13 @@ fun HomeScreen(
                 ) {
                     QuickStartTile(
                         icon = "💗",
-                        title = "Can't decide?",
-                        subtitle = "Let VIBE choose for you",
+                        title = stringResource(R.string.quick_decide_title),
+                        subtitle = stringResource(R.string.quick_decide_body),
                         containerColor = Color(0xFFFFF0F5),
                         accentColor = VibeCoral,
                         modifier = Modifier.weight(1f),
                         onClick = {
-                            if (hasGroups) groups.firstOrNull()?.let { onOpenGroup(it.id) } else onCreateGroup()
+                            if (hasGroups) groups.firstOrNull()?.let { onStartDecision(it.id) } else onCreateGroup()
                         },
                     )
                     QuickStartTile(

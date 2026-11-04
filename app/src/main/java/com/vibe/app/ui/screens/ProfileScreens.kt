@@ -199,6 +199,10 @@ class ProfileViewModel(
         }
     }
 
+    fun refreshNotifications() {
+        viewModelScope.launch { notificationRepository.refresh() }
+    }
+
     fun markNotificationRead(notification: VibeNotification) {
         viewModelScope.launch { notificationRepository.markRead(notification.id) }
     }
@@ -858,6 +862,8 @@ fun NotificationsScreen(
         )
     }
     val notifications by viewModel.notifications.collectAsStateWithLifecycle()
+
+    androidx.compose.runtime.LaunchedEffect(Unit) { viewModel.refreshNotifications() }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,

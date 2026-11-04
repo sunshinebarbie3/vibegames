@@ -111,6 +111,10 @@ class DecisionViewModel(
         activityRepository.observeForGroup(groupId)
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
+    fun refreshActivities(groupId: String) {
+        viewModelScope.launch { activityRepository.refresh(groupId) }
+    }
+
     fun setUserId(userId: String) {
         currentUserId = userId
     }
@@ -211,6 +215,8 @@ fun DecisionStartScreen(
     }
     val activities by viewModel.activities(groupId).collectAsStateWithLifecycle()
     val eligible = remember(activities) { activities.filter { it.status.isEligibleForRounds } }
+
+    androidx.compose.runtime.LaunchedEffect(groupId) { viewModel.refreshActivities(groupId) }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,

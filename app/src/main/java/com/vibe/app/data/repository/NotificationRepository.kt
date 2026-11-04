@@ -37,14 +37,19 @@ class NotificationRepository(
 ) {
 
     val notifications: Flow<List<VibeNotification>> =
-        database.notificationDao().observeAll().map { rows -> rows.map { it.toDomain() } }
+        database.notificationDao().observeAll()
+            .map { rows -> rows.filterNot { it.read }.map { it.toDomain() } }
 
     val unreadCount: Flow<Int> = database.notificationDao().observeUnreadCount()
 
     suspend fun refresh(): VibeResult<Int> =
         when (val result = apiResult { api.notifications() }) {
             is ApiResult.Success -> {
-                database.notificationDao().upsert(result.data.map { it.toDomain().toEntity() })
+                result.data.forEach { dto ->
+                    val dao = database.notificationDao()
+                    val existing = dao.byId(dto.id)
+                    dao.upsert(dto.toDomain().toEntity().copy(read = dto.read || existing?.read == true))
+                }
                 VibeResult.Ok(result.data.size)
             }
 

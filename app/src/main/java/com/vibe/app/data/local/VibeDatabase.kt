@@ -382,6 +382,9 @@ interface MemoryDao {
 
 @Dao
 interface NotificationDao {
+    @Query("SELECT * FROM notifications WHERE id = :notificationId LIMIT 1")
+    suspend fun byId(notificationId: String): NotificationEntity?
+
     @Query("SELECT * FROM notifications ORDER BY createdAt DESC")
     fun observeAll(): Flow<List<NotificationEntity>>
 
