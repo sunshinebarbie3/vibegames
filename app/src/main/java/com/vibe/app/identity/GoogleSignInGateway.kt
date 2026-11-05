@@ -27,6 +27,9 @@ class GoogleSignInGateway(
 
     val isConfigured: Boolean get() = serverClientId.isNotBlank()
 
+    fun setupIssue(): GoogleSignInSetupIssue? =
+        googleSignInSetupIssue(serverClientId, BuildConfig.API_BASE_URL)
+
     suspend fun requestIdToken(activityContext: Context = context): Result<String> = runCatching {
         check(isConfigured) { "GOOGLE_SERVER_CLIENT_ID is not configured" }
 

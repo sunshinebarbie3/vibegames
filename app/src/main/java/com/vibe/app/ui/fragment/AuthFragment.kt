@@ -36,10 +36,38 @@ class AuthFragment : Fragment(R.layout.fragment_auth) {
         }
         b.switchMode.setOnClickListener { findNavController().navigate(R.id.loginFragment, android.os.Bundle().apply { putBoolean("register", !register) }, androidx.navigation.NavOptions.Builder().setPopUpTo(R.id.loginFragment, true).build()) }
         b.google.setOnClickListener {
+            b.error.visibility = View.GONE
             vm.action({
-                val token = vm.c.googleSignIn.requestIdToken(requireContext()).getOrElse { return@action com.vibe.app.core.VibeResult.Problem(detail = it.message) }
+                val setupMessage = when (vm.c.googleSignIn.setupIssue()) {
+                    com.vibe.app.identity.GoogleSignInSetupIssue.WEB_CLIENT_ID_MISSING -> getString(R.string.auth_google_missing_client_id)
+                    com.vibe.app.identity.GoogleSignInSetupIssue.API_URL_NOT_HTTPS,
+                    com.vibe.app.identity.GoogleSignInSetupIssue.API_URL_IS_PLACEHOLDER,
+                    com.vibe.app.identity.GoogleSignInSetupIssue.API_URL_MISSING_TRAILING_SLASH -> getString(R.string.auth_google_api_not_configured)
+                    null -> null
+                }
+                if (setupMessage != null) {
+                    return@action com.vibe.app.core.VibeResult.Problem(detail = setupMessage)
+                }
+                val token = vm.c.googleSignIn.requestIdToken(requireContext()).getOrElse {
+                    return@action com.vibe.app.core.VibeResult.Problem(detail = getString(R.string.auth_google_picker_failed))
+                }
                 vm.c.authRepository.signInWithGoogle(token)
-            }) { if (showResult(it)) (requireActivity() as MainActivity).signedIn() }
+            }) { result ->
+                when (result) {
+                    is com.vibe.app.core.VibeResult.Ok -> (requireActivity() as MainActivity).signedIn()
+                    is com.vibe.app.core.VibeResult.Problem -> {
+                        val message = when (result.kind) {
+                            com.vibe.app.data.remote.ApiErrorKind.NETWORK -> getString(R.string.auth_google_api_unreachable)
+                            com.vibe.app.data.remote.ApiErrorKind.SERVER -> getString(R.string.auth_google_server_error)
+                            com.vibe.app.data.remote.ApiErrorKind.UNAUTHORISED -> getString(R.string.auth_google_token_rejected)
+                            null -> result.detail ?: getString(R.string.error_generic)
+                            else -> getString(R.string.error_generic)
+                        }
+                        b.error.text = message
+                        b.error.visibility = View.VISIBLE
+                    }
+                }
+            }
         }
         b.forgot.setOnClickListener {
             val layout = TextInputLayout(requireContext()).apply { hint = getString(R.string.field_email) }
