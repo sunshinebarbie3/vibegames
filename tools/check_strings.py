@@ -112,6 +112,9 @@ def main() -> int:
 
     for path in sorted(RES.rglob("*.xml")) + [MANIFEST]:
         for kind, name in XML_REF_RE.findall(read(path)):
+            # Material supplies these styles. The Android resource linker verifies them.
+            if kind == "style" and name.startswith("Widget.Material3."):
+                continue
             if kind == "mipmap" or name in resource_defs:
                 continue
             problems.append(f"{path}: @{kind}/{name} has no definition")
