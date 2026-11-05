@@ -28,8 +28,31 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         }
         b.decide.setOnClickListener { choose(true) { navigate(R.id.groupFragment, "groupId" to it) } }
         b.surprise.setOnClickListener { choose(false) { navigate(R.id.surpriseFragment, "groupId" to it) } }
-        collect(vm.profile) { b.greeting.text = getString(R.string.home_greeting, it?.displayName ?: vm.session.value?.displayName.orEmpty()) }
-        collect(vm.groups) { groups -> adapter.submitList(groups.map { CardItem(it.id, it.icon, it.name, resources.getQuantityString(R.plurals.group_members, it.memberCount, it.memberCount), if (it.syncState.name == "PENDING") "⏳" else "") }); b.empty.visibility = if (groups.isEmpty()) View.VISIBLE else View.GONE }
-        collect(vm.notifications) { rows -> val unread = rows.count { !it.read }; b.notifications.text = getString(R.string.notifications_title) + if (unread > 0) " ($unread)" else "" }
+        fun renderActions() {
+            val groups = vm.groups.value
+            val uid = vm.session.value?.userId
+            b.decide.visibility = if (groups.any { it.ownerId == uid }) View.VISIBLE else View.GONE
+            b.surprise.visibility = if (groups.isEmpty()) View.GONE else View.VISIBLE
+        }
+        collect(vm.session) { renderActions() }
+        collect(vm.profile) { profile ->
+            val name = profile?.displayName?.takeIf { it.isNotBlank() } ?: vm.session.value?.displayName
+            b.greeting.text = if (name.isNullOrBlank()) getString(R.string.app_name) else getString(R.string.home_greeting, name)
+        }
+        collect(vm.groups) { groups ->
+            adapter.submitList(groups.map {
+                CardItem(it.id, it.icon, it.name, resources.getQuantityString(R.plurals.group_members, it.memberCount, it.memberCount), if (it.syncState.name == "PENDING") "⏳" else "")
+            })
+            b.empty.visibility = if (groups.isEmpty()) View.VISIBLE else View.GONE
+            b.groupHeading.setText(if (groups.isEmpty()) R.string.home_empty_title else R.string.home_your_groups)
+            renderActions()
+        }
+        collect(vm.notifications) { rows ->
+            val count = rows.count { !it.read }
+            b.notifications.text = if (count > 0) count.toString() else ""
+            b.notifications.iconPadding = if (count > 0) (8 * resources.displayMetrics.density).toInt() else 0
+            val label = getString(R.string.notifications_title)
+            b.notifications.contentDescription = if (count > 0) "$label ($count)" else label
+        }
     }
 }

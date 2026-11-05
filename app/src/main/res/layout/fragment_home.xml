@@ -1,19 +1,54 @@
-<?xml version='1.0' encoding='utf-8'?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent" android:fillViewport="true" android:background="@color/canvas">
-  <LinearLayout android:orientation="vertical" android:padding="20dp" android:layout_width="match_parent" android:layout_height="wrap_content">
-    <TextView android:id="@+id/greeting" android:text="" android:textSize="28sp" android:textColor="@color/text_primary" android:layout_width="match_parent" android:layout_height="wrap_content" android:textStyle="bold" />
-    <TextView android:id="@+id/subtitle" android:text="@string/home_subtitle" android:textSize="16sp" android:textColor="@color/text_secondary" android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingTop="4dp" />
-    <com.google.android.material.button.MaterialButton android:id="@+id/notifications" android:text="@string/notifications_title" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" style="Widget.Material3.Button.TonalButton" />
-    <TextView android:id="@+id/groupHeading" android:text="@string/home_your_groups" android:textSize="20sp" android:textColor="@color/text_primary" android:layout_width="match_parent" android:layout_height="wrap_content" android:textStyle="bold" android:paddingTop="24dp" />
-    <androidx.recyclerview.widget.RecyclerView android:id="@+id/groups" android:layout_width="match_parent" android:layout_height="wrap_content" android:nestedScrollingEnabled="false" android:paddingTop="12dp" />
-    <TextView android:id="@+id/empty" android:text="@string/home_empty_body" android:textSize="16sp" android:textColor="@color/text_secondary" android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingTop="12dp" />
-    <LinearLayout android:orientation="horizontal" android:layout_width="match_parent" android:layout_height="wrap_content">
-      <com.google.android.material.button.MaterialButton android:id="@+id/create" android:text="@string/action_create_group" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginTop="12dp" style="Widget.Material3.Button" android:layout_weight="1" android:layout_marginEnd="6dp" />
-      <com.google.android.material.button.MaterialButton android:id="@+id/join" android:text="@string/action_join_group" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginTop="12dp" style="Widget.Material3.Button" android:layout_weight="1" android:layout_marginEnd="6dp" />
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:fillViewport="true" android:background="@color/canvas">
+    <LinearLayout android:orientation="vertical" android:padding="20dp"
+        android:layout_width="match_parent" android:layout_height="wrap_content">
+        <LinearLayout android:orientation="horizontal" android:gravity="center_vertical"
+            android:layout_width="match_parent" android:layout_height="wrap_content">
+            <TextView android:id="@+id/greeting" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="wrap_content" android:textSize="28sp" android:textStyle="bold"
+                android:textColor="@color/text_primary" android:layout_marginEnd="12dp"/>
+            <com.google.android.material.button.MaterialButton android:id="@+id/notifications"
+                style="@style/Widget.Material3.Button.TextButton" android:layout_width="wrap_content"
+                android:minWidth="48dp" android:minHeight="48dp" android:layout_height="wrap_content"
+                android:contentDescription="@string/notifications_title" app:icon="@drawable/ic_notification"
+                app:iconGravity="textStart" app:iconPadding="0dp"/>
+        </LinearLayout>
+        <com.google.android.material.card.MaterialCardView android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:layout_marginTop="20dp"
+            app:cardBackgroundColor="@color/surface" app:cardCornerRadius="20dp"
+            app:cardElevation="0dp" app:strokeColor="@color/outline" app:strokeWidth="1dp">
+            <LinearLayout android:orientation="vertical" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:padding="16dp">
+                <TextView android:id="@+id/groupHeading" android:text="@string/home_your_groups"
+                    android:textSize="22sp" android:textColor="@color/text_primary" android:textStyle="bold"
+                    android:layout_width="match_parent" android:layout_height="wrap_content"/>
+                <TextView android:id="@+id/empty" android:text="@string/home_empty_body"
+                    android:textSize="16sp" android:textColor="@color/text_secondary" android:paddingTop="6dp"
+                    android:layout_width="match_parent" android:layout_height="wrap_content"/>
+                <com.google.android.material.button.MaterialButton android:id="@+id/create"
+                    android:text="@string/action_create_group" android:layout_width="match_parent"
+                    android:layout_height="wrap_content" android:minHeight="48dp" android:layout_marginTop="12dp"/>
+                <com.google.android.material.button.MaterialButton android:id="@+id/join"
+                    style="@style/Widget.Material3.Button.OutlinedButton" android:text="@string/action_join_group"
+                    android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="48dp"/>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+        <androidx.recyclerview.widget.RecyclerView android:id="@+id/groups" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:nestedScrollingEnabled="false" android:paddingTop="8dp"/>
+        <TextView android:id="@+id/quickHeading" android:text="@string/home_quick_start"
+            android:textSize="20sp" android:textColor="@color/text_primary" android:textStyle="bold"
+            android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingTop="20dp"/>
+        <com.google.android.material.button.MaterialButton android:id="@+id/decide"
+            style="@style/Widget.Material3.Button.OutlinedButton" android:text="@string/home_cant_decide"
+            android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="48dp"/>
+        <com.google.android.material.button.MaterialButton android:id="@+id/surprise"
+            style="@style/Widget.Material3.Button.OutlinedButton" android:text="@string/home_surprise_me"
+            android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="48dp"/>
+        <com.google.android.material.button.MaterialButton android:id="@+id/activities"
+            style="@style/Widget.Material3.Button.OutlinedButton" android:text="@string/home_my_activities"
+            android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="48dp"/>
     </LinearLayout>
-    <TextView android:id="@+id/quickHeading" android:text="@string/home_quick_start" android:textSize="20sp" android:textColor="@color/text_primary" android:layout_width="match_parent" android:layout_height="wrap_content" android:textStyle="bold" android:paddingTop="24dp" />
-    <com.google.android.material.button.MaterialButton android:id="@+id/decide" android:text="@string/home_cant_decide" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" style="Widget.Material3.Button.OutlinedButton" />
-    <com.google.android.material.button.MaterialButton android:id="@+id/surprise" android:text="@string/home_surprise_me" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" style="Widget.Material3.Button.OutlinedButton" />
-    <com.google.android.material.button.MaterialButton android:id="@+id/activities" android:text="@string/home_my_activities" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" style="Widget.Material3.Button.OutlinedButton" />
-  </LinearLayout>
 </ScrollView>
