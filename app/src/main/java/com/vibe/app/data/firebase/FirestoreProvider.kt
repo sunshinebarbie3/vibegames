@@ -4,7 +4,7 @@ import android.util.Log
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreSettings
-import com.google.firebase.firestore.QueryDocumentSnapshot
+import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.WriteBatch
 import com.vibe.app.domain.Activity
@@ -97,12 +97,13 @@ class FirestoreProvider(
             "inviteCode" to group.inviteCode,
             "createdAt" to group.createdAt,
             "memberIds" to listOf(group.ownerId),
-            "members" to mapOf(group.ownerId to mapOf("joinedAt" to group.createdAt)),
+            "members" to mapOf(group.ownerId to mapOf("joinedAt" to group.createdAt, "displayName" to group.members.firstOrNull { it.userId == group.ownerId }?.displayName.orEmpty())),
             "updatedAt" to System.currentTimeMillis(),
         )
-        firestore.collection("groups").document(group.id).set(data).await()
-        // Record the invite code lookup.
-        firestore.collection("invites").document(group.inviteCode).set(mapOf("groupId" to group.id)).await()
+        firestore.runBatch { batch ->
+            batch.set(firestore.collection("groups").document(group.id), data)
+            batch.set(firestore.collection("invites").document(group.inviteCode), mapOf("groupId" to group.id))
+        }.await()
         group
     }
 
@@ -125,19 +126,40 @@ class FirestoreProvider(
             ))
             groupSnap.reference
         }.await()
-        getGroup(groupId) ?: error("Group not found after joining")
+        getGroup(groupId, uid) ?: error("Group not found after joining")
     }
 
-    suspend fun getGroup(groupId: String): Group? = withContext(io) {
+    private fun DocumentSnapshot.readGroup(uid: String): Group {
+        val owner = requireNotNull(getString("ownerId")) { "Group has no owner" }
+        val details = get("members") as? Map<*, *>
+        val members = (get("memberIds") as? List<*>).orEmpty().filterIsInstance<String>().map { id ->
+            val member = details?.get(id) as? Map<*, *>
+            GroupMember(
+                userId = id,
+                displayName = member?.get("displayName") as? String ?: "",
+                role = if (id == owner) GroupRole.OWNER else GroupRole.MEMBER,
+                joinedAt = (member?.get("joinedAt") as? Number)?.toLong() ?: 0L,
+            )
+        }
+        return Group(
+            id = id, name = getString("name").orEmpty(), icon = getString("icon").orEmpty(),
+            inviteCode = getString("inviteCode").orEmpty(), ownerId = owner,
+            createdAt = getLong("createdAt") ?: 0L,
+            role = if (uid == owner) GroupRole.OWNER else GroupRole.MEMBER,
+            memberCount = members.size, members = members,
+        )
+    }
+
+    suspend fun getGroup(groupId: String, uid: String): Group? = withContext(io) {
         val snap = firestore.collection("groups").document(groupId).get().await()
-        if (!snap.exists()) null else snap.toObject(Group::class.java)!!
+        if (!snap.exists()) null else snap.readGroup(uid)
     }
 
     suspend fun getGroupsForUser(uid: String): List<Group> = withContext(io) {
         val snaps = firestore.collection("groups")
             .whereArrayContains("memberIds", uid)
             .get().await()
-        snaps.mapNotNull { it.toObject(Group::class.java) }
+        snaps.map { it.readGroup(uid) }
     }
 
     suspend fun deleteGroup(groupId: String) = withContext(io) {

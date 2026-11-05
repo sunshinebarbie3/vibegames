@@ -91,8 +91,8 @@ class FirebaseAuthProvider(
         val providers = user.providerData.map { it.providerId }
         if (!providers.contains("google.com")) return
         // Require at least one other provider (e.g. password) before unlinking.
-        if (providers.size == 1) error("Set a password before unlinking Google.")
-        withContext(io) { user.unlink(providers.first { it != "google.com" }).await() }
+        if ("password" !in providers) error("Set a password before unlinking Google.")
+        withContext(io) { user.unlink("google.com").await() }
     }
 
     /** Delete the current user's Firebase Auth account. */
