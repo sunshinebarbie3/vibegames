@@ -48,7 +48,7 @@ class ActivityRepository(
             withContext(Dispatchers.IO) {
                 database.activityDao().upsert(serverActivities.map { it.toEntity() })
             }
-            serverActivities.size
+            VibeResult.Ok(serverActivities.size)
         }.getOrElse { VibeResult.Ok(0) }
 
     suspend fun refreshMine(): VibeResult<Int> =

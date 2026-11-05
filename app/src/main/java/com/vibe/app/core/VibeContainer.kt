@@ -10,6 +10,7 @@ import com.vibe.app.data.prefs.SettingsStore
 import com.vibe.app.data.repository.*
 import com.vibe.app.identity.GoogleSignInGateway
 import com.vibe.app.identity.PushGateway
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.collect

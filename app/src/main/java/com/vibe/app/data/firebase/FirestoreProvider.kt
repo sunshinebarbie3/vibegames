@@ -20,13 +20,14 @@ import com.vibe.app.domain.User
 import com.vibe.app.domain.VibeNotification
 import com.vibe.app.domain.Vote
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 /**
  * Cloud Firestore provider.
  *
- * Replaces all /api/v1/* REST calls to the Node.js server. Reads and writes go
+ * Replaces all REST calls under /api/v1/ to the Node.js server. Reads and writes go
  * directly to Firestore, which handles offline caching and sync automatically
  * when persistence is enabled.
  *
@@ -83,7 +84,7 @@ class FirestoreProvider(
 
     suspend fun getUserProfile(uid: String): User? = withContext(io) {
         val snap = firestore.collection("users").document(uid).get().await()
-        if (!snap.exists) null else snap.toObject(User::class.java)!!
+        if (!snap.exists()) null else snap.toObject(User::class.java)!!
     }
 
     // ------------------------------------------------------------------ groups
@@ -108,14 +109,14 @@ class FirestoreProvider(
     suspend fun joinGroup(groupId: String, uid: String, displayName: String): Group = withContext(io) {
         firestore.runTransaction { transaction ->
             val groupSnap = transaction.get(firestore.collection("groups").document(groupId))
-            if (!groupSnap.exists) throw Exception("Group not found")
+            if (!groupSnap.exists()) throw Exception("Group not found")
             val groupData = groupSnap.data ?: throw Exception("Group data missing")
-            val memberIds = groupData["memberIds"] as? List<*> ?: emptyList()
+            val memberIds = groupData["memberIds"] as? List<*> ?: emptyList<Any?>()
             if (uid in memberIds) {
                 throw Exception("Already a member")
             }
             val updatedMemberIds = memberIds + uid
-            val updatedMembers = (groupData["members"] as? Map<*, *> ?: mutableMapOf()).toMutableMap()
+            val updatedMembers = (groupData["members"] as? Map<*, *> ?: emptyMap<Any?, Any?>()).toMutableMap()
             updatedMembers[uid] = mapOf("joinedAt" to System.currentTimeMillis(), "displayName" to displayName)
             transaction.update(groupSnap.reference, mapOf(
                 "memberIds" to updatedMemberIds,
@@ -129,7 +130,7 @@ class FirestoreProvider(
 
     suspend fun getGroup(groupId: String): Group? = withContext(io) {
         val snap = firestore.collection("groups").document(groupId).get().await()
-        if (!snap.exists) null else snap.toObject(Group::class.java)!!
+        if (!snap.exists()) null else snap.toObject(Group::class.java)!!
     }
 
     suspend fun getGroupsForUser(uid: String): List<Group> = withContext(io) {
@@ -147,12 +148,12 @@ class FirestoreProvider(
     suspend fun leaveGroup(groupId: String, uid: String) = withContext(io) {
         firestore.runTransaction { transaction ->
             val groupSnap = transaction.get(firestore.collection("groups").document(groupId))
-            if (!groupSnap.exists) throw Exception("Group not found")
+            if (!groupSnap.exists()) throw Exception("Group not found")
             val groupData = groupSnap.data ?: throw Exception("Group data missing")
             val ownerId = groupData["ownerId"] as? String ?: throw Exception("No owner")
             if (uid == ownerId) throw Exception("Owner cannot leave")
-            val memberIds = (groupData["memberIds"] as? List<*> ?: emptyList()).filter { it != uid }
-            val members = (groupData["members"] as? Map<*, *> ?: mutableMapOf()).toMutableMap()
+            val memberIds = (groupData["memberIds"] as? List<*> ?: emptyList<Any?>()).filter { it != uid }
+            val members = (groupData["members"] as? Map<*, *> ?: emptyMap<Any?, Any?>()).toMutableMap()
             members.remove(uid)
             transaction.update(groupSnap.reference, mapOf(
                 "memberIds" to memberIds,
@@ -235,7 +236,7 @@ class FirestoreProvider(
 
     suspend fun getDecision(decisionId: String): Decision? = withContext(io) {
         val snap = firestore.collection("decisions").document(decisionId).get().await()
-        if (!snap.exists) null else snap.toObject(Decision::class.java)!!
+        if (!snap.exists()) null else snap.toObject(Decision::class.java)!!
     }
 
     suspend fun updateDecision(decision: Decision) = withContext(io) {
@@ -285,7 +286,7 @@ class FirestoreProvider(
     suspend fun getVote(decisionId: String, activityId: String, userId: String): Vote? = withContext(io) {
         val voteId = "$decisionId:$activityId:$userId"
         val snap = firestore.collection("votes").document(voteId).get().await()
-        if (!snap.exists) null else snap.toObject(Vote::class.java)!!
+        if (!snap.exists()) null else snap.toObject(Vote::class.java)!!
     }
 
     // ------------------------------------------------------------------ plans and memories

@@ -1,5 +1,7 @@
 package com.vibe.app.ui
 
+import com.vibe.app.core.ProblemKind
+
 import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle

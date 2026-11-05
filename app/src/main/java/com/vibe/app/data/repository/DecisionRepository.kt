@@ -8,6 +8,8 @@ import com.vibe.app.data.local.VibeDatabase
 import com.vibe.app.data.local.toDomain
 import com.vibe.app.data.local.toEntity
 import com.vibe.app.data.prefs.SettingsStore
+import com.vibe.app.domain.Activity
+import com.vibe.app.domain.Ids
 import com.vibe.app.domain.ActivityStatus
 import com.vibe.app.domain.Decision
 import com.vibe.app.domain.DecisionRound
@@ -108,7 +110,7 @@ class DecisionRepository(
     suspend fun castVote(decisionId: String, activityId: String, choice: Boolean): VibeResult<String> {
         val uid = settings.currentUserId() ?: return VibeResult.Problem(detail = "Please sign in")
         val decision = database.decisionDao().byId(decisionId) ?: return VibeResult.Problem(detail = "Round not found")
-        if (decision.state != DecisionState.OPEN) return VibeResult.Problem(detail = "This round is closed.")
+        if (decision.state != DecisionState.OPEN.name) return VibeResult.Problem(detail = "This round is closed.")
         val ids = Codecs.decodeList(decision.roundActivityIdsCsv)
         if (activityId !in ids) return VibeResult.Problem(detail = "This idea is not in this round.")
 
@@ -155,8 +157,8 @@ class DecisionRepository(
         // Evaluate the outcome from stored votes.
         val votes = database.voteDao().byDecision(id)
         val activities = database.activityDao().byGroup(d.groupId)
-        val memberIds = group.members.map { it.userId }
-        val eligible = activities.filter { it.status.isEligibleForRounds }
+        val memberIds = database.groupDao().members(d.groupId).map { it.userId }
+        val eligible = activities.filter { it.toDomain().status.isEligibleForRounds }
         val input = com.vibe.app.domain.RoundInput(
             roundNumber = d.roundNumber,
             state = RoundState.OPEN,
@@ -177,7 +179,7 @@ class DecisionRepository(
             else -> null
         }
 
-        val updated = d.copy(state = newState, winnerActivityId = winnerId)
+        val updated = d.toDomain().copy(state = newState, winnerActivityId = winnerId)
         database.decisionDao().upsert(updated.toEntity(
             tallies = evaluation.tallies,
             survivorIds = evaluation.survivorIds,
@@ -190,7 +192,7 @@ class DecisionRepository(
             val newStatus = when {
                 winnerId == activity.id -> ActivityStatus.WINNER
                 evaluation.eliminatedIds.contains(activity.id) -> ActivityStatus.ELIMINATED
-                else -> activity.status
+                else -> activity.toDomain().status
             }
             database.activityDao().updateStatus(activity.id, newStatus.name)
         }
@@ -225,7 +227,7 @@ class DecisionRepository(
         val decision = database.decisionDao().byId(id) ?: return VibeResult.Problem(detail = "Round not found")
         val activities = database.activityDao().byGroup(decision.groupId)
         val ids = Codecs.decodeList(decision.roundActivityIdsCsv)
-        val eligible = activities.filter { it.id in ids && it.id !in rejected && it.status.isEligibleForRounds }
+        val eligible = activities.filter { it.id in ids && it.id !in rejected && it.toDomain().status.isEligibleForRounds }
         if (eligible.isEmpty()) return VibeResult.Problem(detail = "No eligible ideas remain.")
         val chosen = eligible.random()
         return VibeResult.Ok(chosen.toDomain())
@@ -251,11 +253,12 @@ class DecisionRepository(
         )
         val eval = com.vibe.app.domain.DecisionEngine.evaluate(input)
 
-        val tallies = if (entity.state != DecisionState.OPEN) eval.tallies else emptyList()
-        val survivors = if (entity.state != DecisionState.OPEN) eval.survivorIds else emptyList()
-        val eliminated = if (entity.state != DecisionState.OPEN) eval.eliminatedIds else emptyList()
+        val decision = entity.toDomain()
+        val tallies = if (decision.state != DecisionState.OPEN) eval.tallies else emptyList()
+        val survivors = if (decision.state != DecisionState.OPEN) eval.survivorIds else emptyList()
+        val eliminated = if (decision.state != DecisionState.OPEN) eval.eliminatedIds else emptyList()
 
-        val outcome = when (entity.state) {
+        val outcome = when (decision.state) {
             DecisionState.OPEN -> com.vibe.app.domain.RoundOutcome.InProgress(eval.participation.pendingMemberIds)
             DecisionState.CLOSED -> when {
                 eval.survivorIds.size > 1 -> com.vibe.app.domain.RoundOutcome.Tie(eval.survivorIds)
@@ -269,12 +272,12 @@ class DecisionRepository(
         }
 
         return DecisionRound(
-            decision = entity.toDomain(),
+            decision = decision,
             participation = eval.participation,
             tallies = tallies,
             survivorIds = survivors,
             eliminatedIds = eliminated,
-            votesRevealed = entity.state != DecisionState.OPEN,
+            votesRevealed = decision.state != DecisionState.OPEN,
             canCloseEarly = eval.canCloseEarly,
             outcome = outcome,
         )

@@ -45,7 +45,7 @@ class NotificationRepository(
                 serverNotifications.forEach { dto ->
                     val dao = database.notificationDao()
                     val existing = dao.byId(dto.id)
-                    dao.upsert(dto.toDomain().toEntity().copy(read = dto.read || existing?.read == true))
+                    dao.upsert(dto.toEntity().copy(read = dto.read || existing?.read == true))
                 }
             }
             VibeResult.Ok(serverNotifications.size)

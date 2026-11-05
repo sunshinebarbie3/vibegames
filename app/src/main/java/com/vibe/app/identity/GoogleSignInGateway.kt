@@ -1,5 +1,7 @@
 package com.vibe.app.identity
 
+import com.vibe.app.BuildConfig
+
 import android.content.Context
 import androidx.credentials.CredentialManager
 import androidx.credentials.CustomCredential

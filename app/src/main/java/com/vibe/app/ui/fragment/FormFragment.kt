@@ -77,9 +77,9 @@ class FormFragment : Fragment(R.layout.fragment_form) {
         b.secondary.setOnClickListener { back() }
         collect(vm.busy) { b.progress.visibility = if (it) View.VISIBLE else View.GONE; b.primary.isEnabled = !it }
         // Populate only once; an emission from sync must not overwrite a draft.
-        collect(vm.profile) { user -> if (!prefilled && mode == "profile" && user != null) { prefilled = true; b.name.setText(user.displayName); b.username.setText(user.username); user.photoUri?.let { b.photoPreview.visibility = View.VISIBLE; b.photoPreview.load(it.blobUrl()) } } }
+        collect(vm.profile) { user -> if (!prefilled && mode == "profile" && user != null) { prefilled = true; b.name.setText(user.displayName); b.username.setText(user.username); user.photoUri?.let { b.photoPreview.visibility = View.VISIBLE; b.photoPreview.load(it) } } }
         if (mode == "activity" && entityId.isNotBlank()) collect(vm.activity(entityId)) { a -> if (!prefilled && a != null) { prefilled = true; b.name.setText(a.title); b.descriptionInput.setText(a.description); icon = a.icon; b.pickIcon.text = "$icon  ${getString(R.string.group_icon_label)}" } }
-        if (mode == "memory") collect(vm.memory(entityId)) { m -> if (!prefilled && m != null) { prefilled = true; b.descriptionInput.setText(m.caption); b.rating.rating = m.rating.toFloat(); photos = m.photoUris; photos.firstOrNull()?.let { b.photoPreview.visibility = View.VISIBLE; b.photoPreview.load(it.blobUrl()) } } }
+        if (mode == "memory") collect(vm.memory(entityId)) { m -> if (!prefilled && m != null) { prefilled = true; b.descriptionInput.setText(m.caption); b.rating.rating = m.rating.toFloat(); photos = m.photoUris; photos.firstOrNull()?.let { b.photoPreview.visibility = View.VISIBLE; b.photoPreview.load(it) } } }
         b.primary.setOnClickListener {
             val name = b.name.text?.toString().orEmpty(); val description = b.descriptionInput.text?.toString().orEmpty()
             vm.action({

@@ -58,18 +58,18 @@ class GroupRepository(
                     database.groupDao().upsertMembers(dto.members.map { it.toEntity(dto.id) })
                 }
             }
-            serverGroups.size
+            VibeResult.Ok(serverGroups.size)
         }.getOrElse { VibeResult.Ok(0) }
     }
 
     suspend fun refreshGroup(groupId: String): VibeResult<Group> =
         runCatching {
-            val group = firestore.getGroup(groupId)
+            val group = firestore.getGroup(groupId) ?: return VibeResult.Problem(detail = "Group not found.")
             withContext(Dispatchers.IO) {
                 database.groupDao().upsert(group.toEntity(time.nowMillis()))
                 database.groupDao().upsertMembers(group.members.map { it.toEntity(group.id) })
             }
-            group
+            VibeResult.Ok(group)
         }.getOrElse { VibeResult.Problem(detail = "Could not refresh group.") }
 
     suspend fun createGroup(name: String, icon: String): VibeResult<Group> {
@@ -103,7 +103,7 @@ class GroupRepository(
         database.groupDao().upsertMembers(local.members.map { it.toEntity(groupId) })
 
         return runCatching {
-            firestore.createGroup(local)
+            VibeResult.Ok(firestore.createGroup(local))
         }.getOrElse {
             // Offline: the group exists locally and will sync to Firestore automatically.
             VibeResult.Ok(local.copy(syncState = SyncState.PENDING))
@@ -121,7 +121,7 @@ class GroupRepository(
         val cached = database.groupDao().byInviteCode(code)
         if (cached != null) {
             return runCatching {
-                firestore.joinGroup(cached.id, uid, displayName)
+                VibeResult.Ok(firestore.joinGroup(cached.id, uid, displayName))
             }.getOrElse {
                 VibeResult.Ok(cached.toDomain())
             }

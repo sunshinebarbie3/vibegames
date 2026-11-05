@@ -3,20 +3,21 @@ package com.vibe.app.data.firebase
 import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
-import com.google.firebase.auth.GetTokenResult
+import com.google.firebase.auth.UserProfileChangeRequest
 import com.google.firebase.auth.GoogleAuthProvider
 import com.vibe.app.BuildConfig
 import com.vibe.app.domain.AppLanguage
 import com.vibe.app.domain.ThemeMode
 import com.vibe.app.domain.User
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 /**
  * Firebase Authentication provider.
  *
- * Replaces the custom /api/v1/auth/* endpoints on the Node.js server.
+ * Replaces the custom endpoints under /api/v1/auth/ on the Node.js server.
  * All sign-in (email/password and Google) goes through FirebaseAuth directly.
  * The ID token is available to callers that need it (e.g. Firestore security rules
  * and any client-side validation), but the Android app authenticates via the
@@ -37,7 +38,7 @@ class FirebaseAuthProvider(
     suspend fun getIdToken(forceRefresh: Boolean = false): String? =
         withContext(io) {
             auth.currentUser?.let { user ->
-                user.getIdToken(forceRefresh).await()
+                user.getIdToken(forceRefresh).await().token
             }
         }
 
@@ -55,7 +56,7 @@ class FirebaseAuthProvider(
                 ?: error("No user returned by Firebase Authentication.")
         }
         // Update the display name on the Firebase Auth profile.
-        user.updateProfile(displayName.trim()).await()
+        user.updateProfile(UserProfileChangeRequest.Builder().setDisplayName(displayName.trim()).build()).await()
         return user
     }
 
@@ -103,17 +104,17 @@ class FirebaseAuthProvider(
     /** Convert a FirebaseUser to the app's domain User. Local settings (theme,
      * language, etc.) are still stored in DataStore/Room, not Firebase Auth. */
     fun toDomain(user: FirebaseUser): User {
-        val name = user.displayName.takeIf { it.isNotBlank() }.orEmpty()
+        val name = user.displayName?.takeIf { it.isNotBlank() }.orEmpty()
         val email = user.email.orEmpty()
         return User(
             id = user.uid,
-            displayName = name.takeIf { it.isNotEmpty() }.orElse(email.split("@").firstOrNull() ?: "Member"),
-            username = name.takeIf { it.isNotEmpty() }.orElse(email.split("@").firstOrNull() ?: "member"),
+            displayName = name.ifBlank { email.substringBefore("@").ifBlank { "Member" } },
+            username = name.ifBlank { email.substringBefore("@").ifBlank { "member" } },
             email = email,
             language = AppLanguage.ENGLISH,
             themeMode = ThemeMode.DARK,
             photoUri = user.photoUrl?.toString(),
-            createdAt = user.metadata.creationTimestamp,
+            createdAt = user.metadata?.creationTimestamp ?: 0L,
         )
     }
 

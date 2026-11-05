@@ -20,7 +20,7 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
         b.plans.setOnClickListener { navigate(R.id.plansFragment) }; b.settings.setOnClickListener { navigate(R.id.settingsFragment) }; b.help.setOnClickListener { navigate(R.id.helpFragment) }
         collect(vm.profile) { user ->
             b.name.text = user?.displayName ?: vm.session.value?.displayName; b.email.text = user?.email ?: vm.session.value?.email
-            b.photo.setImageResource(R.drawable.ic_vibe_logo); user?.photoUri?.let { b.photo.load(it.blobUrl()) }
+            b.photo.setImageResource(R.drawable.ic_vibe_logo); user?.photoUri?.let { b.photo.load(it) }
             val stats = user?.let { vm.c.authRepository.stats(it.id) }
             b.stats.text = getString(R.string.profile_stats_decisions)+": ${stats?.decisions ?: 0}   ·   "+getString(R.string.profile_stats_activities)+": ${stats?.activities ?: 0}   ·   "+getString(R.string.profile_stats_groups)+": ${stats?.groups ?: 0}"
         }

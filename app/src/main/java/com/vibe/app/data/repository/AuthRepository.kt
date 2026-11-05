@@ -40,10 +40,10 @@ class AuthRepository(
     }
 
     suspend fun register(name: String, email: String, password: String, confirmation: String): VibeResult<User> {
-        Validators.displayName(name)?.let { return VibeResult.Problem(it) }
-        Validators.email(email)?.let { return VibeResult.Problem(it) }
-        Validators.password(password)?.let { return VibeResult.Problem(it) }
-        Validators.passwordConfirmation(password, confirmation)?.let { return VibeResult.Problem(it) }
+        Validators.displayName(name)?.let { return VibeResult.Problem(detail = it) }
+        Validators.email(email)?.let { return VibeResult.Problem(detail = it) }
+        Validators.password(password)?.let { return VibeResult.Problem(detail = it) }
+        Validators.passwordConfirmation(password, confirmation)?.let { return VibeResult.Problem(detail = it) }
 
         val firebaseUser = runCatching {
             firebaseAuth.createUserWithEmailAndPassword(email, password, name.trim())
@@ -53,8 +53,8 @@ class AuthRepository(
     }
 
     suspend fun login(email: String, password: String): VibeResult<User> {
-        Validators.email(email)?.let { return VibeResult.Problem(it) }
-        Validators.password(password)?.let { return VibeResult.Problem(it) }
+        Validators.email(email)?.let { return VibeResult.Problem(detail = it) }
+        Validators.password(password)?.let { return VibeResult.Problem(detail = it) }
 
         val firebaseUser = runCatching {
             firebaseAuth.signInWithEmailAndPassword(email.trim(), password)
@@ -134,7 +134,7 @@ class AuthRepository(
     }
 
     suspend fun updateProfile(displayName: String, username: String?, photoUri: String? = null): VibeResult<User> {
-        Validators.displayName(displayName)?.let { return VibeResult.Problem(it) }
+        Validators.displayName(displayName)?.let { return VibeResult.Problem(detail = it) }
         val current = profileNow() ?: return VibeResult.Problem(detail = "Please sign in.")
         val uid = settings.currentUserId() ?: return VibeResult.Problem(detail = "Not signed in.")
         val updated = current.copy(
@@ -164,15 +164,15 @@ class AuthRepository(
 
     suspend fun changePassword(current: String, fresh: String, confirmation: String): VibeResult<Unit> {
         if (current.isBlank()) return VibeResult.Problem(FieldError.CURRENT_PASSWORD_REQUIRED)
-        Validators.password(fresh)?.let { return VibeResult.Problem(it) }
-        Validators.passwordConfirmation(fresh, confirmation)?.let { return VibeResult.Problem(it) }
+        Validators.password(fresh)?.let { return VibeResult.Problem(detail = it) }
+        Validators.passwordConfirmation(fresh, confirmation)?.let { return VibeResult.Problem(detail = it) }
         // Password changes go through Firebase Auth. The client cannot verify the
         // current password without re-signing in; Firebase handles this server-side.
         return VibeResult.Problem(detail = "Use the password reset flow or sign in again to change your password.")
     }
 
     suspend fun requestPasswordReset(email: String): VibeResult<Unit> {
-        Validators.email(email)?.let { return VibeResult.Problem(it) }
+        Validators.email(email)?.let { return VibeResult.Problem(detail = it) }
         runCatching { firebaseAuth.sendPasswordReset(email.trim()) }.getOrElse {
             return VibeResult.Problem(detail = "Could not send a reset email. Check your connection and try again.")
         }

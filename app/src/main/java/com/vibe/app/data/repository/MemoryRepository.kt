@@ -49,7 +49,7 @@ class MemoryRepository(
             withContext(Dispatchers.IO) {
                 database.memoryDao().upsert(serverMemories.map { it.toEntity() })
             }
-            serverMemories.size
+            VibeResult.Ok(serverMemories.size)
         }.getOrElse { VibeResult.Ok(0) }
 
     suspend fun refreshPlans(groupId: String): VibeResult<Int> =
@@ -58,7 +58,7 @@ class MemoryRepository(
             withContext(Dispatchers.IO) {
                 serverPlans.forEach { database.planDao().upsert(it.toEntity()) }
             }
-            serverPlans.size
+            VibeResult.Ok(serverPlans.size)
         }.getOrElse { VibeResult.Ok(0) }
 
     /** "Plan it": the winner gets a date and time. */
@@ -83,7 +83,7 @@ class MemoryRepository(
         return runCatching {
             firestore.savePlan(plan)
             withContext(Dispatchers.IO) {
-                database.planDao().upsert(plan.copy(syncState = SyncState.SYNCED).toEntity())
+                database.planDao().upsert(plan.toEntity())
             }
             VibeResult.Ok(plan)
         }.getOrElse {
