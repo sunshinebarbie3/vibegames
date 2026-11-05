@@ -116,17 +116,12 @@ class GroupRepository(
         val user = database.userDao().byId(uid)
         val displayName = user?.displayName.orEmpty()
 
-        // Look up the invite code locally first for instant feedback.
-        val cached = database.groupDao().byInviteCode(code)
-        if (cached != null) {
-            return runCatching {
-                VibeResult.Ok(firestore.joinGroup(cached.id, uid, displayName))
-            }.getOrElse {
-                VibeResult.Problem(detail = it.message ?: "Could not join the group.")
-            }
-        }
-
-        return VibeResult.Problem(detail = "Invite code not found locally. Go online and try again.")
+        return runCatching {
+            val group = firestore.joinGroup(code, uid, displayName)
+            database.groupDao().upsert(group.toEntity(time.nowMillis()))
+            database.groupDao().upsertMembers(group.members.map { it.toEntity(group.id) })
+            VibeResult.Ok(group)
+        }.getOrElse { VibeResult.Problem(detail = it.message ?: "Could not join the group.") }
     }
 
     /** Looks up a code in the local cache so the join screen can confirm first. */

@@ -1,6 +1,7 @@
 package com.vibe.app.ui.fragment
 
 import android.os.Bundle
+import kotlinx.coroutines.flow.catch
 import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -15,6 +16,11 @@ class WinnerFragment : Fragment(R.layout.fragment_decision) {
     override fun onViewCreated(view: View, state: Bundle?) {
         val b = FragmentDecisionBinding.bind(view)
         val groupId = requireArguments().getString("groupId").orEmpty()
+        collect(vm.c.decisionRepository.remoteRounds(groupId).catch { snack(R.string.error_network) }) { rows ->
+            vm.c.activityRepository.refresh(groupId)
+            vm.c.groupRepository.refreshGroup(groupId)
+            vm.c.decisionRepository.cacheRounds(rows)
+        }
         b.no.visibility = View.GONE; b.yes.visibility = View.GONE; b.progress.visibility = View.GONE
         collect(vm.winner(groupId)) { round ->
             if (round == null) { b.icon.text = "🗳️"; b.title.setText(R.string.decision_waiting); b.body.setText(R.string.decision_none); b.primary.visibility = View.GONE; b.secondary.visibility = View.GONE; return@collect }

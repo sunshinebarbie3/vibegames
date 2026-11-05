@@ -21,6 +21,8 @@ import com.vibe.app.domain.VibeNotification
 import com.vibe.app.domain.Vote
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -107,26 +109,15 @@ class FirestoreProvider(
         group
     }
 
-    suspend fun joinGroup(groupId: String, uid: String, displayName: String): Group = withContext(io) {
-        firestore.runTransaction { transaction ->
-            val groupSnap = transaction.get(firestore.collection("groups").document(groupId))
-            if (!groupSnap.exists()) throw Exception("Group not found")
-            val groupData = groupSnap.data ?: throw Exception("Group data missing")
-            val memberIds = groupData["memberIds"] as? List<*> ?: emptyList<Any?>()
-            if (uid in memberIds) {
-                throw Exception("Already a member")
-            }
-            val updatedMemberIds = memberIds + uid
-            val updatedMembers = (groupData["members"] as? Map<*, *> ?: emptyMap<Any?, Any?>()).toMutableMap()
-            updatedMembers[uid] = mapOf("joinedAt" to System.currentTimeMillis(), "displayName" to displayName)
-            transaction.update(groupSnap.reference, mapOf(
-                "memberIds" to updatedMemberIds,
-                "members" to updatedMembers,
-                "updatedAt" to System.currentTimeMillis(),
-            ))
-            groupSnap.reference
-        }.await()
-        getGroup(groupId, uid) ?: error("Group not found after joining")
+    suspend fun joinGroup(code: String, uid: String, displayName: String): Group = withContext(io) {
+        val invite = firestore.collection("invites").document(code).get().await()
+        val groupId = invite.getString("groupId") ?: error("Invite code not found.")
+        val ref = firestore.collection("groups").document(groupId)
+        ref.update(mapOf(
+            "memberIds" to FieldValue.arrayUnion(uid),
+            "members.$uid" to mapOf("displayName" to displayName, "invite" to code),
+        )).await()
+        getGroup(groupId, uid) ?: error("Group not found.")
     }
 
     private fun DocumentSnapshot.readGroup(uid: String): Group {
@@ -229,7 +220,13 @@ class FirestoreProvider(
         val snaps = firestore.collection("activities")
             .whereEqualTo("groupId", groupId)
             .get().await()
-        snaps.mapNotNull { it.toObject(Activity::class.java) }
+        snaps.map { doc -> Activity(
+            id = doc.id, groupId = groupId, title = doc.getString("title").orEmpty(),
+            description = doc.getString("description").orEmpty(), icon = doc.getString("icon") ?: "🎉",
+            status = ActivityStatus.valueOf(doc.getString("status") ?: "SUGGESTED"),
+            createdBy = doc.getString("createdBy").orEmpty(), createdByName = doc.getString("createdByName").orEmpty(),
+            createdAt = doc.getLong("createdAt") ?: 0L,
+        ) }
     }
 
     // ------------------------------------------------------------------ decisions / votes
@@ -239,7 +236,7 @@ class FirestoreProvider(
      * votes map. Vote documents are written individually under /votes/{voteId}
      * where voteId = "{decisionId}:{activityId}:{userId}".
      */
-    suspend fun createDecision(decision: Decision): Decision = withContext(io) {
+    suspend fun createDecision(decision: Decision, activityIds: List<String>): Decision = withContext(io) {
         val data = mutableMapOf<String, Any?>(
             "groupId" to decision.groupId,
             "roundNumber" to decision.roundNumber,
@@ -248,12 +245,35 @@ class FirestoreProvider(
             "winnerActivityId" to decision.winnerActivityId,
             "startedBy" to decision.startedBy,
             "startedAt" to decision.startedAt,
-            "activityIds" to emptyList<String>(),
+            "activityIds" to activityIds,
             "votes" to emptyMap<String, Any?>(),
             "updatedAt" to System.currentTimeMillis(),
         )
         firestore.collection("decisions").document(decision.id).set(data).await()
         decision
+    }
+
+    fun observeGroupRounds(groupId: String) = callbackFlow {
+        val listener = firestore.collection("decisions").whereEqualTo("groupId", groupId)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) close(error)
+                else if (snapshot != null) trySend(snapshot.map { doc ->
+                    Decision(doc.id, groupId, doc.getLong("roundNumber")?.toInt() ?: 1,
+                        DecisionState.valueOf(doc.getString("state") ?: "OPEN"), doc.getLong("deadlineEpochMillis"),
+                        doc.getString("winnerActivityId"), doc.getString("startedBy").orEmpty(),
+                        doc.getLong("startedAt") ?: 0L) to (doc.get("activityIds") as? List<*>).orEmpty().filterIsInstance<String>()
+                })
+            }
+        awaitClose { listener.remove() }
+    }
+
+    fun observeParticipation(id: String) = callbackFlow {
+        val listener = firestore.collection("decisions").document(id).collection("participation")
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) close(error)
+                else if (snapshot != null) trySend(snapshot.associate { it.id to (it.get("activities") as? List<*>).orEmpty().toSet() })
+            }
+        awaitClose { listener.remove() }
     }
 
     suspend fun getDecision(decisionId: String): Decision? = withContext(io) {
@@ -284,7 +304,10 @@ class FirestoreProvider(
             epochMillis = epochMillis,
         )
         withContext(io) {
-            firestore.collection("votes").document(voteId).set(
+            firestore.runBatch { batch ->
+                val receipt = firestore.collection("decisions").document(decisionId).collection("participation").document(userId)
+                batch.set(receipt, mapOf("activities" to FieldValue.arrayUnion(activityId), "latest" to activityId), SetOptions.merge())
+                batch.set(firestore.collection("votes").document(voteId),
                 mapOf(
                     "decisionId" to vote.decisionId,
                     "activityId" to vote.activityId,
@@ -293,16 +316,22 @@ class FirestoreProvider(
                     "epochMillis" to vote.epochMillis,
                     "createdAt" to System.currentTimeMillis(),
                 )
-            ).await()
+                )
+            }.await()
         }
         return vote
+    }
+
+    suspend fun finishVoting(id: String) {
+        firestore.collection("decisions").document(id).update("acceptingVotes", false).await()
     }
 
     suspend fun getVotesForDecision(decisionId: String): List<Vote> = withContext(io) {
         val snaps = firestore.collection("votes")
             .whereEqualTo("decisionId", decisionId)
             .get().await()
-        snaps.mapNotNull { it.toObject(Vote::class.java) }
+        snaps.map { doc -> Vote(doc.id, decisionId, requireNotNull(doc.getString("activityId")),
+            requireNotNull(doc.getString("userId")), requireNotNull(doc.getBoolean("choice")), doc.getLong("epochMillis") ?: 0L) }
     }
 
     suspend fun getVote(decisionId: String, activityId: String, userId: String): Vote? = withContext(io) {

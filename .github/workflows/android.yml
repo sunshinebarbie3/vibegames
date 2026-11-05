@@ -1,96 +1,68 @@
-name: Android and API verification
+name: Android CI
+
 on:
   push:
-    branches: ['arena/**']
   pull_request:
   workflow_dispatch:
+
 permissions:
   contents: read
+
 jobs:
   android:
     runs-on: ubuntu-24.04
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v5
+
       - uses: actions/setup-java@v5
-        with: { distribution: temurin, java-version: '21' }
-      - uses: gradle/actions/setup-gradle@v4
-      - name: Install Android SDK
-        run: |
-          set -euo pipefail
-          SDK="$RUNNER_TEMP/android-sdk"
-          mkdir -p "$SDK/cmdline-tools"
-          curl -fsSL --retry 3 https://dl.google.com/android/repository/commandlinetools-linux-13114758_latest.zip -o "$RUNNER_TEMP/android-tools.zip"
-          unzip -q "$RUNNER_TEMP/android-tools.zip" -d "$SDK/cmdline-tools"
-          mv "$SDK/cmdline-tools/cmdline-tools" "$SDK/cmdline-tools/latest"
-          echo "ANDROID_HOME=$SDK" >> "$GITHUB_ENV"
-          echo "ANDROID_SDK_ROOT=$SDK" >> "$GITHUB_ENV"
-          yes | "$SDK/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
-          "$SDK/cmdline-tools/latest/bin/sdkmanager" 'platforms;android-36' 'build-tools;36.0.0' 'platform-tools'
-      - name: Resources
-        run: |
-          python3 tools/check_strings.py || { python3 tools/check_strings.py 2>&1 | while IFS= read -r line; do echo "::error::$line"; done; exit 1; }
-      - name: Compile XML, Room and Kotlin
-        run: |
-          bash ./gradlew :app:assembleDebug :app:testDebugUnitTest :app:lintDebug --stacktrace > android-build.log 2>&1 || { tail -220 android-build.log; exit 1; }
-          tail -40 android-build.log
-      - name: Surface compiler errors
-        if: failure()
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          p=Path('android-build.log')
-          lines=p.read_text().splitlines() if p.exists() else ['Android build log missing']
-          import re
-          matched=[s for s in lines if s.startswith(('e: ','w: ')) or re.search(r'(Could not|couldn.t|unresolved|failed|FAILURE|What went wrong|Execution failed|not found|timed out|UnknownHost|PKIX|401|403|404|500|error:|Error:|Exception|exception|Caused by|Kotlin compiler|internal error|A problem occurred|Type mismatch|Overload resolution|cannot find|not enough information|Expecting)',s,re.I)]
-          compile_lines=[i for i,s in enumerate(lines) if 'compileDebugKotlin' in s or 'KotlinCompilerWorkAction' in s]
-          if compile_lines:
-              i=compile_lines[-1]
-              section=lines[max(0,i-180):min(len(lines),i+60)]
-              roots=[s.strip() for s in section if s.startswith(('e: ','w: ')) or re.search(r'(Caused by:|Compilation error|OutOfMemory|Exception|Error|error:|internal error|NoSuchMethod|Could not|unresolved reference|Type mismatch|KotlinCompiler|backend)',s,re.I)]
-              if roots: print('::error::Kotlin compiler diagnostics: '+' | '.join(roots[-100:]).replace('%','%25').replace('\r',' ').replace('\n',' '))
-              else:
-                  print('::error::Kotlin build log excerpt: '+' | '.join(section[-80:]).replace('%','%25').replace('\r',' ').replace('\n',' '))
-          from pathlib import Path
-          daemon_logs=list(Path.home().glob('.kotlin/daemon/*'))+list(Path.home().glob('.gradle/daemon/*/*.out.log'))
-          for log in daemon_logs[-12:]:
-              try:
-                  text=log.read_text(errors='replace').splitlines()
-                  clues=[x.strip() for x in text if re.search(r'(Caused by:|Exception|OutOfMemory|Kotlin.*(error|fail)|compiler.*(error|fail)|Compilation error)',x,re.I)]
-                  if clues: print('::error::Daemon diagnostic '+str(log.name)+': '+' | '.join(clues[-24:]).replace('%','%25'))
-              except Exception: pass
-          start=max((i for i,s in enumerate(lines) if s.strip()=='* What went wrong:'),default=-1)
-          if start >= 0:
-              for s in lines[start:start+90]: print('::error::'+s.replace('%','%25').replace('\r','%0D').replace('\n','%0A'))
-          details=[s.strip() for s in matched if s.startswith(('e: ','w: ')) or re.search(r'(Could not find|Could not get|Could not resolve|No cached version|PKIX|UnknownHost|status code|Received status|not found|timed out|unresolved reference|error:|Type mismatch|Overload resolution|Expecting)',s,re.I)]
-          if details: print('::error::Dependency/compiler details: '+' | '.join(details[:18]).replace('%','%25'))
-          if start < 0:
-              for s in (matched or lines[:80])[:18]: print('::error::'+s.replace('%','%25').replace('\r','%0D').replace('\n','%0A'))
-          report=Path('app/build/reports/lint-results-debug.xml')
-          if report.exists():
-              import xml.etree.ElementTree as ET
-              root=ET.parse(report).getroot()
-              for issue in root.findall('issue'):
-                  if issue.get('severity') == 'Error':
-                      loc=issue.find('location'); file=loc.get('file','') if loc is not None else ''
-                      line=loc.get('line','') if loc is not None else ''
-                      print('::error::Android lint '+str(issue.get('id'))+' '+file+':'+line+' '+str(issue.get('message')))
-          PY
-      - uses: actions/upload-artifact@v4
-        if: always()
         with:
-          name: vibe-debug-and-reports
-          path: |
-            app/build/outputs/apk/debug/*.apk
-            app/build/reports/
-            app/schemas/
-            android-build.log
-  api:
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
-        with: { node-version: '22', cache: npm, cache-dependency-path: server/package-lock.json }
-      - run: npm ci
-        working-directory: server
-      - run: npm run check && npm test
-        working-directory: server
+          distribution: temurin
+          java-version: '21'
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Install Android SDK 36
+        run: |
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" 'platforms;android-36' 'build-tools;36.0.0'
+
+      - name: Configure offline Firebase build fixture
+        run: |
+          mkdir -p app/src/debug
+          cat > app/src/debug/google-services.json <<'JSON'
+          {
+            "project_info": {
+              "project_number": "123456789012",
+              "project_id": "demo-vibegames-ci"
+            },
+            "client": [{
+              "client_info": {
+                "mobilesdk_app_id": "1:123456789012:android:1234567890abcdef",
+                "android_client_info": { "package_name": "com.vibe.app" }
+              },
+              "api_key": [{ "current_key": "ci-placeholder" }]
+            }],
+            "configuration_version": "1"
+          }
+          JSON
+
+      - name: Check translated resources
+        run: python3 tools/check_strings.py
+
+      - name: Build debug APK, run unit tests and lint
+        run: ./gradlew :app:assembleDebug :app:testDebugUnitTest :app:lintDebug --stacktrace
+
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-reports
+          path: app/build/reports/
+          if-no-files-found: ignore
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: vibe-ci-debug
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error

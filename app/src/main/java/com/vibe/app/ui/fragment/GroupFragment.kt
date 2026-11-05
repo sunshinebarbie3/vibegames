@@ -2,6 +2,7 @@ package com.vibe.app.ui.fragment
 
 import android.content.Intent
 import android.os.Bundle
+import kotlinx.coroutines.flow.catch
 import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -21,6 +22,11 @@ class GroupFragment : Fragment(R.layout.fragment_detail) {
         val b = FragmentDetailBinding.bind(view)
         val id = requireArguments().getString("groupId").orEmpty()
         listOf<View>(b.filters,b.list,b.photo,b.secondary,b.tertiary,b.delete,b.extra,b.manage).forEach { it.visibility = View.GONE }
+        collect(vm.c.decisionRepository.remoteRounds(id).catch { snack(R.string.error_network) }) { rows ->
+            vm.c.activityRepository.refresh(id)
+            vm.c.groupRepository.refreshGroup(id)
+            vm.c.decisionRepository.cacheRounds(rows)
+        }
         var filter = "all"
         val adapter = CardAdapter { navigate(R.id.activityFragment, "entityId" to it.id) }
         b.list.layoutManager = LinearLayoutManager(requireContext()); b.list.adapter = adapter

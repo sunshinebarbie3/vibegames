@@ -37,17 +37,23 @@ service cloud.firestore {
     // ------------------------------------------------------------------ groups
 
     match /groups/{groupId} {
-      allow read: if isMember(groupId);
+      allow read: if isSignedIn() && uid() in resource.data.memberIds;
       allow create: if isSignedIn();
-      allow update: if isOwner(groupId);
+      allow update: if isOwner(groupId) || (isSignedIn() &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members','memberIds']) &&
+        request.resource.data.memberIds == (uid() in resource.data.memberIds ? resource.data.memberIds : resource.data.memberIds.concat([uid()])) &&
+        request.resource.data.members.diff(resource.data.members).affectedKeys().hasOnly([uid()]) &&
+        request.resource.data.members[uid()].keys().hasOnly(['invite', 'displayName']) &&
+        request.resource.data.members[uid()].invite == resource.data.inviteCode &&
+        get(/databases/$(database)/documents/invites/$(resource.data.inviteCode)).data.groupId == groupId);
       allow delete: if isOwner(groupId);
     }
 
     // Invite code lookup: read-only for anyone who knows the code.
     match /invites/{code} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn();
-      allow update, delete: if false;
+      allow get: if isSignedIn();
+      allow create: if isSignedIn() && getAfter(/databases/$(database)/documents/groups/$(request.resource.data.groupId)).data.ownerId == uid() &&
+        getAfter(/databases/$(database)/documents/groups/$(request.resource.data.groupId)).data.inviteCode == code;
     }
 
     // ------------------------------------------------------------------ activities
@@ -76,20 +82,29 @@ service cloud.firestore {
     // This lets us enforce one vote per member per idea and prevent voting
     // on someone else's behalf.
     match /votes/{voteId} {
-      allow read: if isSignedIn() && isMember(get(/databases/$(database)/documents/decisions/$(voteId.split(':')[0])).data.groupId);
-      allow create: if isSignedIn() &&
-        // The voteId must encode {decisionId}:{activityId}:{uid}
-        voteId.split(':').size() == 3 &&
-        voteId.split(':')[2] == uid() &&
-        // The decision must exist and the user must be a member of its group.
-        isMember(get(/databases/$(database)/documents/decisions/$(voteId.split(':')[0])).data.groupId) &&
-        // The round must be open.
-        get(/databases/$(database)/documents/decisions/$(voteId.split(':')[0])).data.state == "OPEN";
-      allow update: if isSignedIn() &&
-        voteId.split(':')[2] == uid() &&
-        // A later vote replaces an earlier one on the same activity.
-        request.resource.data.activityId == resource.data.activityId;
-      allow delete: if false;
+      function round(id) { return get(/databases/$(database)/documents/decisions/$(id)).data; }
+      allow read: if isSignedIn() && isMember(round(resource.data.decisionId).groupId) &&
+        (resource.data.userId == uid() || (isOwner(round(resource.data.decisionId).groupId) && round(resource.data.decisionId).get('acceptingVotes', true) == false) || round(resource.data.decisionId).state != 'OPEN');
+      allow create, update: if isSignedIn() && request.resource.data.userId == uid() &&
+        voteId == request.resource.data.decisionId + ':' + request.resource.data.activityId + ':' + uid() &&
+        isMember(round(request.resource.data.decisionId).groupId) && round(request.resource.data.decisionId).state == 'OPEN' &&
+        round(request.resource.data.decisionId).get('acceptingVotes', true) && request.resource.data.activityId in round(request.resource.data.decisionId).activityIds &&
+        request.resource.data.choice is bool;
+    }
+
+    match /decisions/{id}/participation/{user} {
+      function round() { return get(/databases/$(database)/documents/decisions/$(id)).data; }
+      function valid(old) {
+        let idea = request.resource.data.latest;
+        let ballot = id + ':' + idea + ':' + user;
+        return user == uid() && isMember(round().groupId) && round().state == 'OPEN' &&
+          idea in round().activityIds && request.resource.data.keys().hasOnly(['latest','activities']) &&
+          request.resource.data.activities == (idea in old ? old : old.concat([idea])) &&
+          getAfter(/databases/$(database)/documents/votes/$(ballot)).data.userId == user;
+      }
+      allow read: if isMember(round().groupId);
+      allow create: if isSignedIn() && valid([]);
+      allow update: if isSignedIn() && valid(resource.data.activities);
     }
 
     // ------------------------------------------------------------------ plans

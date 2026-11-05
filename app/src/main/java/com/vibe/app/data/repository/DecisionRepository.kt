@@ -65,6 +65,16 @@ class DecisionRepository(
     fun observeHistory(groupId: String) =
         database.decisionDao().observeByGroup(groupId).map { rows -> rows.map { it.toDomain() } }
 
+    fun remoteRounds(groupId: String) = firestore.observeGroupRounds(groupId)
+
+    suspend fun cacheRounds(rows: List<Pair<Decision, List<String>>>) {
+        for ((decision, ids) in rows) {
+            val old = database.decisionDao().byId(decision.id)
+            val actualIds = ids.ifEmpty { old?.let { Codecs.decodeList(it.roundActivityIdsCsv) }.orEmpty() }
+            database.decisionDao().upsert(decision.toEntity(roundActivityIds = actualIds))
+        }
+    }
+
     suspend fun currentRoundId(groupId: String) = database.decisionDao().latestOpenId(groupId)
 
     suspend fun startRound(groupId: String, activityIds: List<String> = emptyList(), roundNumber: Int = 1): VibeResult<String> {
@@ -99,7 +109,7 @@ class DecisionRepository(
         ))
 
         return runCatching {
-            firestore.createDecision(decision)
+            firestore.createDecision(decision, ids)
             VibeResult.Ok(id)
         }.getOrElse {
             // Already in Room; will sync when online via Firestore persistence.
@@ -116,7 +126,7 @@ class DecisionRepository(
 
         // Prevent duplicate votes: one vote per member per idea.
         val existing = database.voteDao().find(decisionId, activityId, uid)
-        if (existing != null) {
+        if (existing != null && existing.syncState == SyncState.SYNCED.name) {
             if (existing.choice == choice) return VibeResult.Ok(decisionId)
             return VibeResult.Problem(detail = "Your vote is already recorded.")
         }
@@ -134,18 +144,11 @@ class DecisionRepository(
             epochMillis = timestamp,
             syncState = SyncState.PENDING,
         )
-        database.voteDao().upsert(vote.toEntity())
-
         return runCatching {
             firestore.castVote(decisionId, activityId, uid, choice, timestamp)
-            withContext(Dispatchers.IO) {
-                database.voteDao().updateSyncState(decisionId, activityId, uid, SyncState.SYNCED.name)
-            }
+            database.voteDao().upsert(vote.copy(syncState = SyncState.SYNCED).toEntity())
             VibeResult.Ok(decisionId)
-        }.getOrElse {
-            // Keep the pending vote in Room; it will sync when online.
-            VibeResult.Ok(decisionId)
-        }
+        }.getOrElse { VibeResult.Problem(detail = it.message ?: "Could not save your vote.") }
     }
 
     suspend fun closeRound(id: String): VibeResult<String> {
@@ -155,10 +158,17 @@ class DecisionRepository(
         if (group == null || group.ownerId != uid) return VibeResult.Problem(detail = "Only the group owner can close a round.")
 
         // Evaluate the outcome from stored votes.
-        val votes = database.voteDao().byDecision(id)
+        val remoteVotes = runCatching {
+            firestore.finishVoting(id)
+            firestore.getVotesForDecision(id)
+        }.getOrElse {
+            return VibeResult.Problem(detail = "Could not load all votes. Please try again.")
+        }
+        for (vote in remoteVotes) database.voteDao().upsert(vote.toEntity())
+        val votes = remoteVotes.map { it.toEntity() }
         val activities = database.activityDao().byGroup(d.groupId)
         val memberIds = database.groupDao().members(d.groupId).map { it.userId }
-        val eligible = activities.filter { it.toDomain().status.isEligibleForRounds }
+        val eligible = activities.filter { it.id in Codecs.decodeList(d.roundActivityIdsCsv) }
         val input = com.vibe.app.domain.RoundInput(
             roundNumber = d.roundNumber,
             state = RoundState.OPEN,
