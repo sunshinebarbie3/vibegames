@@ -60,7 +60,7 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         collect(vm.online) { online -> if (online) vm.action({ vm.c.authRepository.providers() }) { if (it is VibeResult.Ok) { googleLinked = "google.com" in it.value.providers; b.linkGoogle.setText(if (googleLinked) R.string.auth_google_unlink else R.string.auth_google_link) } } }
         b.linkGoogle.setOnClickListener {
             if (googleLinked) vm.action({ vm.c.authRepository.unlinkGoogle() }) { if (showResult(it)) { googleLinked = false; b.linkGoogle.setText(R.string.auth_google_link) } }
-            else vm.action({ val token = vm.c.googleSignIn.requestIdToken(requireContext()).getOrElse { return@action VibeResult.Problem(detail = it.message) }; vm.c.authRepository.linkGoogle(token) }) { if (showResult(it,R.string.auth_google_linked)) { googleLinked = true; b.linkGoogle.setText(R.string.auth_google_unlink) } }
+            else vm.action({ val identity = vm.c.googleSignIn.signIn(requireActivity()).getOrElse { return@action VibeResult.Problem(detail = it.message) }; vm.c.authRepository.linkGoogle(identity.googleIdToken) }) { if (showResult(it,R.string.auth_google_linked)) { googleLinked = true; b.linkGoogle.setText(R.string.auth_google_unlink) } }
         }
     }
     private fun showFailed() {

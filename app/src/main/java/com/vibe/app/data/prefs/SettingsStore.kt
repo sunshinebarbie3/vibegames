@@ -30,6 +30,8 @@ data class Session(
     val accessToken: String,
     val refreshToken: String,
     val expiresAtEpochMillis: Long = 0L,
+    val googleAccountId: String? = null,
+    val firebaseUid: String? = null,
 )
 
 /** Locally owned settings: theme, language, alerts, privacy and onboarding. */
@@ -77,6 +79,8 @@ class SettingsStore(context: Context) {
         val ACCESS_TOKEN = stringPreferencesKey("access_token")
         val REFRESH_TOKEN = stringPreferencesKey("refresh_token")
         val EXPIRES_AT = androidx.datastore.preferences.core.longPreferencesKey("expires_at")
+        val GOOGLE_ACCOUNT_ID = stringPreferencesKey("google_account_id")
+        val FIREBASE_UID = stringPreferencesKey("firebase_uid")
         val THEME = stringPreferencesKey("theme_mode")
         val LANGUAGE = stringPreferencesKey("language")
         val NOTIFICATIONS = booleanPreferencesKey("notifications_enabled")
@@ -95,6 +99,8 @@ class SettingsStore(context: Context) {
             accessToken = vault.access(),
             refreshToken = vault.refresh(),
             expiresAtEpochMillis = prefs[Keys.EXPIRES_AT] ?: 0L,
+            googleAccountId = prefs[Keys.GOOGLE_ACCOUNT_ID],
+            firebaseUid = prefs[Keys.FIREBASE_UID],
         )
     }
 
@@ -123,7 +129,10 @@ class SettingsStore(context: Context) {
             prefs[Keys.USER_NAME] = session.displayName
             prefs[Keys.USER_EMAIL] = session.email
             prefs[Keys.EXPIRES_AT] = session.expiresAtEpochMillis
-            
+            session.googleAccountId?.let { prefs[Keys.GOOGLE_ACCOUNT_ID] = it }
+                ?: prefs.remove(Keys.GOOGLE_ACCOUNT_ID)
+            session.firebaseUid?.let { prefs[Keys.FIREBASE_UID] = it }
+                ?: prefs.remove(Keys.FIREBASE_UID)
         }
         tokenVersion.update { it + 1 }
     }
@@ -139,6 +148,8 @@ class SettingsStore(context: Context) {
             prefs.remove(Keys.USER_NAME)
             prefs.remove(Keys.USER_EMAIL)
             prefs.remove(Keys.EXPIRES_AT)
+            prefs.remove(Keys.GOOGLE_ACCOUNT_ID)
+            prefs.remove(Keys.FIREBASE_UID)
         }
         tokenVersion.update { it + 1 }
     }

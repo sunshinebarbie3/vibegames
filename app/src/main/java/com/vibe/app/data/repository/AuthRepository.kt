@@ -10,6 +10,8 @@ import com.vibe.app.data.prefs.Session
 import com.vibe.app.data.remote.*
 import com.vibe.app.data.sync.SyncQueue
 import com.vibe.app.data.sync.onlineMutation
+import com.vibe.app.identity.GoogleFirebaseIdentity
+import com.vibe.app.identity.GoogleSignInGateway
 import com.vibe.app.domain.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -23,6 +25,7 @@ class AuthRepository(
     val settings: SettingsStore,
     private val queue: SyncQueue,
     private val media: MediaRepository? = null,
+    private val googleSignIn: GoogleSignInGateway? = null,
 ) {
     val session = settings.session
     val appSettings = settings.settings
@@ -51,24 +54,41 @@ class AuthRepository(
             is ApiResult.Failure -> r.toProblem()
         }
     }
-    suspend fun signInWithGoogle(token: String): VibeResult<User> = when (val r = apiResult { api.googleSignIn(GoogleAuthRequest(token)) }) {
-        is ApiResult.Success -> signIn(r.data)
-        is ApiResult.Failure -> r.toProblem()
+    suspend fun signInWithGoogle(identity: GoogleFirebaseIdentity): VibeResult<User> {
+        if (identity.googleIdToken.isBlank()) return VibeResult.Problem(detail = "Missing Google ID token")
+        return when (val result = apiResult { api.googleSignIn(GoogleAuthRequest(identity.googleIdToken)) }) {
+            is ApiResult.Success -> signIn(result.data, identity)
+            is ApiResult.Failure -> result.toProblem()
+        }
     }
-    private suspend fun signIn(response: AuthResponse): VibeResult<User> {
-        val user = response.user.toDomain()
+    private suspend fun signIn(response: AuthResponse, identity: GoogleFirebaseIdentity? = null): VibeResult<User> {
+        val apiUser = response.user.toDomain()
+        val user = identity?.let { provider ->
+            apiUser.copy(
+                displayName = provider.displayName.ifBlank { apiUser.displayName },
+                email = provider.email.ifBlank { apiUser.email },
+                photoUri = provider.photoUrl ?: apiUser.photoUri,
+            )
+        } ?: apiUser
         val oldId = settings.currentUserId()
         if (oldId != null && oldId != user.id && database.syncQueueDao().count() > 0) return VibeResult.Problem(detail = "Sync the current account before switching accounts.")
         if (oldId != null && oldId != user.id) withContext(Dispatchers.IO) { database.clearAllTables(); media?.photos?.clear() }
         database.userDao().upsert(user.toEntity())
-        settings.saveSession(Session(user.id, user.displayName, user.email, response.accessToken, response.refreshToken, response.expiresAtEpochMillis))
+        settings.saveSession(
+            Session(
+                user.id, user.displayName, user.email, response.accessToken, response.refreshToken,
+                response.expiresAtEpochMillis,
+                googleAccountId = identity?.googleAccountId,
+                firebaseUid = identity?.firebaseUid,
+            ),
+        )
         settings.setPhotoUri(user.photoUri)
         return VibeResult.Ok(user)
     }
     suspend fun deleteAccount(password: String?): VibeResult<Unit> {
         if (database.syncQueueDao().count() > 0) return VibeResult.Problem(detail = "Sync all changes before deleting your account.")
         return when (val r = apiResult { api.deleteAccount(DeleteAccountRequest(password?.takeIf { it.isNotBlank() })) }) {
-            is ApiResult.Success -> { settings.clearSession(); settings.setPhotoUri(null); withContext(Dispatchers.IO) { database.clearAllTables() }; media?.photos?.clear(); VibeResult.Ok(Unit) }
+            is ApiResult.Success -> { runCatching { googleSignIn?.signOut() }; settings.clearSession(); settings.setPhotoUri(null); withContext(Dispatchers.IO) { database.clearAllTables() }; media?.photos?.clear(); VibeResult.Ok(Unit) }
             is ApiResult.Failure -> r.toProblem()
         }
     }
@@ -80,6 +100,7 @@ class AuthRepository(
             val r = apiResult { api.logout() }
             if (r is ApiResult.Failure && r.kind != ApiErrorKind.NETWORK && r.kind != ApiErrorKind.UNAUTHORISED) return r.toProblem()
         }
+        runCatching { googleSignIn?.signOut() }
         settings.clearSession()
         settings.setPhotoUri(null)
         withContext(Dispatchers.IO) { database.clearAllTables() }

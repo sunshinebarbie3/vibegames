@@ -37,8 +37,8 @@ class AuthFragment : Fragment(R.layout.fragment_auth) {
         b.switchMode.setOnClickListener { findNavController().navigate(R.id.loginFragment, android.os.Bundle().apply { putBoolean("register", !register) }, androidx.navigation.NavOptions.Builder().setPopUpTo(R.id.loginFragment, true).build()) }
         b.google.setOnClickListener {
             vm.action({
-                val token = vm.c.googleSignIn.requestIdToken(requireContext()).getOrElse { return@action com.vibe.app.core.VibeResult.Problem(detail = it.message) }
-                vm.c.authRepository.signInWithGoogle(token)
+                val identity = vm.c.googleSignIn.signIn(requireActivity()).getOrElse { return@action com.vibe.app.core.VibeResult.Problem(detail = it.message) }
+                vm.c.authRepository.signInWithGoogle(identity)
             }) { if (showResult(it)) (requireActivity() as MainActivity).signedIn() }
         }
         b.forgot.setOnClickListener {
