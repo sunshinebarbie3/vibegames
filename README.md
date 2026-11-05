@@ -6,7 +6,7 @@
 
 A group decision app for students: share ideas, vote fairly, make a plan, save the memory.
 
-**Android:** Kotlin + native XML views · Room offline cache · **Backend:** Firebase Auth + Firestore + Cloud Storage + FCM · HTTPS REST API
+**Android:** Kotlin + native XML views · Room offline cache · **Backend:** Firebase Auth + Firestore + FCM
 
 </div>
 
@@ -26,11 +26,9 @@ A group decision app for students: share ideas, vote fairly, make a plan, save t
 ```bash
 python3 tools/check_strings.py
 ./gradlew :app:assembleDebug :app:testDebugUnitTest :app:lintDebug
-npm ci --prefix server
-npm test --prefix server
 ```
 
-A debug APK can compile without Firebase credentials, but live sign-in, REST calls, push and cloud data require Firebase and API deployment configuration. See [`docs/SETUP.md`](docs/SETUP.md) before running. There is no hard-coded demo password, hidden demo account, or invented API key.
+A debug APK can compile without Firebase credentials, but live sign-in and shared data require Firebase configuration. See [`docs/SETUP.md`](docs/SETUP.md) before running. There is no hard-coded demo password, hidden demo account, or invented API key.
 
 To install on an actual phone, enable USB debugging and run `adb devices`, then `adb install -r app/build/outputs/apk/debug/app-debug.apk`. The assignment asks for a **physical-phone demonstration video**; see the recording checklist in the setup guide. This repository does not pretend that an emulator recording satisfies that requirement.
 
@@ -43,10 +41,10 @@ app/                         Kotlin + XML native Android client
   data/repository/            Auth, groups, voting, memory and media
   data/sync/                  WorkManager retry, conflict review, sync acknowledgements
   domain/                     Decision rules, models and validation
-server/                       Node.js HTTPS REST API
+server/                       Firebase Security Rules and indexes (no custom backend)
   src/                        Firebase Auth verification, Firestore and Storage
-  firestore.rules              client access is denied; API Admin SDK owns records
-  storage.rules                blobs are private; API enforces group membership
+  firestore.rules              group membership and voting permissions for direct client access
+  storage.rules                retained for reference; photos stay on-device in this prototype
 prototype/                     Legacy browser walkthrough; not the Android application
 ```
 
@@ -54,4 +52,4 @@ The API implements the same decision rules as `app/src/main/java/com/vibe/app/do
 
 ## Submission requirements
 
-The implementation covers registration/login, SSO, settings, REST + NoSQL, offline sync, FCM notification handling, South African language catalogs and an app icon. Before a Play Store bundle or demo recording, supply the real Firebase project configuration, deployed HTTPS API URL, private upload keystore, Google OAuth web client ID, and a physical Android phone. Release bundling intentionally fails its preflight until those are configured.
+The implementation covers registration/login, SSO, settings, REST + NoSQL, offline sync, FCM notification handling, South African language catalogs and an app icon. Before a Play Store bundle or demo recording, supply the real Firebase project configuration, private upload keystore, Google OAuth web client ID, and a physical Android phone. Release bundling intentionally fails its preflight until those are configured.

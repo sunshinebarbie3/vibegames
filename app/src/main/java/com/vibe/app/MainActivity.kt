@@ -66,7 +66,6 @@ class MainActivity : AppCompatActivity() {
                 launch { vm.settings.collect { applyTheme(it.themeMode); LocaleManager.apply(it.language) } }
                 launch { vm.session.collect { if (ready && it == null && nav.currentDestination?.id !in setOf(R.id.loginFragment, R.id.onboardingFragment)) openRoot(R.id.loginFragment) } }
                 launch { vm.online.collect { updateBanner() } }
-                launch { vm.pending.collect { updateBanner() } }
             }
         }
         binding.offlineBanner.setOnClickListener { if (ready) nav.navigate(R.id.settingsFragment) }
@@ -76,9 +75,8 @@ class MainActivity : AppCompatActivity() {
         if (AppCompatDelegate.getDefaultNightMode() != mode) AppCompatDelegate.setDefaultNightMode(mode)
     }
     private fun updateBanner() {
-        val pending = vm.pending.value
-        binding.offlineBanner.visibility = if (!vm.online.value || pending > 0) android.view.View.VISIBLE else android.view.View.GONE
-        binding.offlineBanner.text = if (!vm.online.value) getString(R.string.state_offline) + " · " + resources.getQuantityString(R.plurals.sync_pending_count, pending, pending) else resources.getQuantityString(R.plurals.sync_pending_count, pending, pending)
+        binding.offlineBanner.visibility = if (!vm.online.value) android.view.View.VISIBLE else android.view.View.GONE
+        binding.offlineBanner.text = if (!vm.online.value) getString(R.string.state_offline) else getString(R.string.state_saved_offline)
     }
     private fun openRoot(id: Int) {
         nav.navigate(id, null, androidx.navigation.NavOptions.Builder().setPopUpTo(R.id.vibeGraph, false).setLaunchSingleTop(true).build())

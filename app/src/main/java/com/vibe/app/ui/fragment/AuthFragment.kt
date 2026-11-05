@@ -40,9 +40,6 @@ class AuthFragment : Fragment(R.layout.fragment_auth) {
             vm.action({
                 val setupMessage = when (vm.c.googleSignIn.setupIssue()) {
                     com.vibe.app.identity.GoogleSignInSetupIssue.WEB_CLIENT_ID_MISSING -> getString(R.string.auth_google_missing_client_id)
-                    com.vibe.app.identity.GoogleSignInSetupIssue.API_URL_NOT_HTTPS,
-                    com.vibe.app.identity.GoogleSignInSetupIssue.API_URL_IS_PLACEHOLDER,
-                    com.vibe.app.identity.GoogleSignInSetupIssue.API_URL_MISSING_TRAILING_SLASH -> getString(R.string.auth_google_api_not_configured)
                     null -> null
                 }
                 if (setupMessage != null) {
@@ -57,9 +54,9 @@ class AuthFragment : Fragment(R.layout.fragment_auth) {
                     is com.vibe.app.core.VibeResult.Ok -> (requireActivity() as MainActivity).signedIn()
                     is com.vibe.app.core.VibeResult.Problem -> {
                         val message = when (result.kind) {
-                            com.vibe.app.data.remote.ApiErrorKind.NETWORK -> getString(R.string.auth_google_api_unreachable)
-                            com.vibe.app.data.remote.ApiErrorKind.SERVER -> getString(R.string.auth_google_server_error)
-                            com.vibe.app.data.remote.ApiErrorKind.UNAUTHORISED -> getString(R.string.auth_google_token_rejected)
+                            com.vibe.app.core.ProblemKind.NETWORK -> getString(R.string.auth_google_api_unreachable)
+                            com.vibe.app.core.ProblemKind.SERVER -> getString(R.string.auth_google_server_error)
+                            com.vibe.app.core.ProblemKind.UNAUTHORISED -> getString(R.string.auth_google_token_rejected)
                             null -> result.detail ?: getString(R.string.error_generic)
                             else -> getString(R.string.error_generic)
                         }

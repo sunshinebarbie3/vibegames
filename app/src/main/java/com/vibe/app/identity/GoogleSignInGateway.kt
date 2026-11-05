@@ -6,16 +6,12 @@ import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
-import com.vibe.app.BuildConfig
-
 /**
- * PoE: Google Sign-In as the SSO route.
+ * Google Sign-In as the SSO route.
  *
  * This uses Credential Manager (the current Google-recommended API, replacing
- * the deprecated GoogleSignInClient). The ID token is handed straight to the API,
- * which is the only component allowed to trust it: the API verifies signature,
- * `aud`, `iss` and `exp` before issuing a VIBE session, and the client never
- * treats the token as proof of identity on its own.
+ * the deprecated GoogleSignInClient). The ID token is exchanged directly with
+ * Firebase Authentication (signInWithCredential), not with a custom backend.
  *
  * `GOOGLE_SERVER_CLIENT_ID` comes from the build config; when it is blank the
  * button stays visible but explains what is missing instead of failing silently.
@@ -37,8 +33,10 @@ class GoogleSignInGateway(
 
     val isConfigured: Boolean get() = resolvedServerClientId().isNotBlank()
 
-    fun setupIssue(): GoogleSignInSetupIssue? =
-        googleSignInSetupIssue(resolvedServerClientId(), BuildConfig.API_BASE_URL)
+    fun setupIssue(): GoogleSignInSetupIssue? {
+        if (resolvedServerClientId().isBlank()) return GoogleSignInSetupIssue.WEB_CLIENT_ID_MISSING
+        return null
+    }
 
     suspend fun requestIdToken(activityContext: Context = context): Result<String> = runCatching {
         val webClientId = resolvedServerClientId()

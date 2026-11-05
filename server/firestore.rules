@@ -1,8 +1,132 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Only the Admin SDK REST API can access member data. Never expose the
-    // service account to the Android app or enable unauthenticated client reads.
-    match /{document=**} { allow read, write: if false; }
+
+    // Helper: is the requester authenticated?
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Helper: the requesting user's UID.
+    function uid() {
+      return request.auth.uid;
+    }
+
+    // Helper: is the user a member of the given group?
+    function isMember(groupId) {
+      return isSignedIn() && exists(/databases/$(database)/documents/groups/$(groupId)) &&
+        get(/databases/$(database)/documents/groups/$(groupId)).data.memberIds
+          .hasAny([uid()]);
+    }
+
+    // Helper: is the user the owner of the given group?
+    function isOwner(groupId) {
+      return isSignedIn() && exists(/databases/$(database)/documents/groups/$(groupId)) &&
+        get(/databases/$(database)/documents/groups/$(groupId)).data.ownerId == uid();
+    }
+
+    // ------------------------------------------------------------------ users
+
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && userId == uid();
+      allow update: if isSignedIn() && userId == uid();
+      allow delete: if false; // Account deletion is handled by Firebase Auth.
+    }
+
+    // ------------------------------------------------------------------ groups
+
+    match /groups/{groupId} {
+      allow read: if isMember(groupId);
+      allow create: if isSignedIn();
+      allow update: if isOwner(groupId);
+      allow delete: if isOwner(groupId);
+    }
+
+    // Invite code lookup: read-only for anyone who knows the code.
+    match /invites/{code} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if false;
+    }
+
+    // ------------------------------------------------------------------ activities
+
+    match /activities/{activityId} {
+      allow read: if isSignedIn() && isMember(resource.data.groupId);
+      allow create: if isSignedIn() && isMember(request.resource.data.groupId);
+      allow update: if isSignedIn() && isMember(resource.data.groupId) &&
+        (request.auth.uid == resource.data.createdBy || isOwner(resource.data.groupId));
+      allow delete: if isSignedIn() && isMember(resource.data.groupId) &&
+        (request.auth.uid == resource.data.createdBy || isOwner(resource.data.groupId));
+    }
+
+    // ------------------------------------------------------------------ decisions
+
+    match /decisions/{decisionId} {
+      allow read: if isSignedIn() && isMember(resource.data.groupId);
+      allow create: if isSignedIn() && isOwner(request.resource.data.groupId);
+      allow update: if isSignedIn() && isOwner(resource.data.groupId);
+      allow delete: if false;
+    }
+
+    // ------------------------------------------------------------------ votes
+
+    // Vote document IDs are predictable: {decisionId}:{activityId}:{userId}.
+    // This lets us enforce one vote per member per idea and prevent voting
+    // on someone else's behalf.
+    match /votes/{voteId} {
+      allow read: if isSignedIn() && isMember(get(/databases/$(database)/documents/decisions/$(voteId.split(':')[0])).data.groupId);
+      allow create: if isSignedIn() &&
+        // The voteId must encode {decisionId}:{activityId}:{uid}
+        voteId.split(':').size() == 3 &&
+        voteId.split(':')[2] == uid() &&
+        // The decision must exist and the user must be a member of its group.
+        isMember(get(/databases/$(database)/documents/decisions/$(voteId.split(':')[0])).data.groupId) &&
+        // The round must be open.
+        get(/databases/$(database)/documents/decisions/$(voteId.split(':')[0])).data.state == "OPEN";
+      allow update: if isSignedIn() &&
+        voteId.split(':')[2] == uid() &&
+        // A later vote replaces an earlier one on the same activity.
+        request.resource.data.activityId == resource.data.activityId;
+      allow delete: if false;
+    }
+
+    // ------------------------------------------------------------------ plans
+
+    match /plans/{planId} {
+      allow read: if isSignedIn() && isMember(resource.data.groupId);
+      allow create: if isSignedIn() && isMember(request.resource.data.groupId);
+      allow update: if isSignedIn() && isMember(resource.data.groupId);
+      allow delete: if false;
+    }
+
+    // ------------------------------------------------------------------ memories
+
+    match /memories/{memoryId} {
+      allow read: if isSignedIn() && isMember(resource.data.groupId);
+      allow create: if isSignedIn() && isMember(request.resource.data.groupId);
+      allow update: if isSignedIn() && isMember(resource.data.groupId) &&
+        request.auth.uid == resource.data.createdBy;
+      allow delete: if false;
+    }
+
+    // ------------------------------------------------------------------ notifications
+
+    match /notifications/{notificationId} {
+      allow read: if isSignedIn() && resource.data.userId == uid();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && resource.data.userId == uid();
+      allow delete: if false;
+    }
+
+    // ------------------------------------------------------------------ devices (FCM tokens)
+
+    match /devices/{deviceId} {
+      allow read: if isSignedIn() && resource.data.userId == uid();
+      allow create: if isSignedIn() && request.resource.data.userId == uid();
+      allow update: if isSignedIn() && resource.data.userId == uid();
+      allow delete: if isSignedIn() && resource.data.userId == uid();
+    }
   }
 }

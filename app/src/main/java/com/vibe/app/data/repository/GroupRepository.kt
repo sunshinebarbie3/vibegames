@@ -2,45 +2,34 @@ package com.vibe.app.data.repository
 
 import com.vibe.app.core.TimeProvider
 import com.vibe.app.core.VibeResult
-import com.vibe.app.core.queuedOfflineResult
-import com.vibe.app.core.toProblem
+import com.vibe.app.data.firebase.FirestoreProvider
 import com.vibe.app.data.local.VibeDatabase
 import com.vibe.app.data.local.toDomain
 import com.vibe.app.data.local.toEntity
 import com.vibe.app.data.prefs.SettingsStore
-import com.vibe.app.data.remote.ApiErrorKind
-import com.vibe.app.data.remote.ApiResult
-import com.vibe.app.data.remote.CreateGroupRequest
-import com.vibe.app.data.remote.JoinGroupRequest
-import com.vibe.app.data.remote.VibeApi
-import com.vibe.app.data.remote.apiResult
-import com.vibe.app.data.remote.toDomain
-import com.vibe.app.data.sync.SyncQueue
 import com.vibe.app.domain.FieldError
 import com.vibe.app.domain.Group
+import com.vibe.app.domain.GroupMember
 import com.vibe.app.domain.GroupRole
 import com.vibe.app.domain.Ids
 import com.vibe.app.domain.InviteCode
-import com.vibe.app.domain.SyncAction
 import com.vibe.app.domain.SyncState
 import com.vibe.app.domain.Validators
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.withContext
 
 /**
  * Groups, membership and the invite code.
  *
- * Groups are read from RoomDB (so the Home screen paints immediately, online or
- * not) and refreshed from the API in the background. Creating a group while
- * offline is allowed: the client generates the group UUID, the row is cached
- * straight away and the action is queued. Because the same UUID is sent to the
- * API, replaying the queue cannot create a duplicate group.
+ * Groups are written directly to Firestore and cached in Room for offline access.
+ * Creating a group while offline is allowed: the client generates the group UUID,
+ * the row is cached straight away and written to Firestore when the connection
+ * returns (Firestore persistence handles the replay automatically).
  */
 class GroupRepository(
-    private val api: VibeApi,
+    private val firestore: FirestoreProvider,
     private val database: VibeDatabase,
-    private val queue: SyncQueue,
     private val settings: SettingsStore,
     private val time: TimeProvider,
 ) {
@@ -60,32 +49,28 @@ class GroupRepository(
     }
 
     suspend fun refresh(): VibeResult<Int> {
-        if (database.syncQueueDao().count() > 0) return VibeResult.Ok(0)
-        return when (val result = apiResult { api.groups() }) {
-            is ApiResult.Success -> {
-                val now = time.nowMillis()
-                result.data.forEach { dto ->
-                    val group = dto.toDomain()
-                    database.groupDao().upsert(group.toEntity(now))
-                    database.groupDao().upsertMembers(group.members.map { it.toEntity(group.id) })
+        val uid = settings.currentUserId() ?: return VibeResult.Ok(0)
+        return runCatching {
+            val serverGroups = firestore.getGroupsForUser(uid)
+            withContext(Dispatchers.IO) {
+                serverGroups.forEach { dto ->
+                    database.groupDao().upsert(dto.toEntity(time.nowMillis()))
+                    database.groupDao().upsertMembers(dto.members.map { it.toEntity(dto.id) })
                 }
-                VibeResult.Ok(result.data.size)
             }
-            is ApiResult.Failure -> result.toProblem()
-        }
+            serverGroups.size
+        }.getOrElse { VibeResult.Ok(0) }
     }
 
     suspend fun refreshGroup(groupId: String): VibeResult<Group> =
-        when (val result = apiResult { api.group(groupId) }) {
-            is ApiResult.Success -> {
-                val group = result.data.toDomain()
+        runCatching {
+            val group = firestore.getGroup(groupId)
+            withContext(Dispatchers.IO) {
                 database.groupDao().upsert(group.toEntity(time.nowMillis()))
                 database.groupDao().upsertMembers(group.members.map { it.toEntity(group.id) })
-                VibeResult.Ok(group)
             }
-
-            is ApiResult.Failure -> result.toProblem()
-        }
+            group
+        }.getOrElse { VibeResult.Problem(detail = "Could not refresh group.") }
 
     suspend fun createGroup(name: String, icon: String): VibeResult<Group> {
         Validators.groupName(name)?.let { return VibeResult.Problem(error = it) }
@@ -105,7 +90,7 @@ class GroupRepository(
             memberCount = 1,
             activityCount = 0,
             members = listOf(
-                com.vibe.app.domain.GroupMember(
+                GroupMember(
                     userId = ownerId,
                     displayName = ownerName,
                     role = GroupRole.OWNER,
@@ -117,38 +102,32 @@ class GroupRepository(
         database.groupDao().upsert(local.toEntity(now))
         database.groupDao().upsertMembers(local.members.map { it.toEntity(groupId) })
 
-        val payload = CreateGroupRequest(name = local.name, icon = local.icon, clientId = groupId, inviteCode = local.inviteCode)
-        val queued = queue.enqueue(SyncAction.CREATE_GROUP, groupId, payload, CreateGroupRequest::class.java)
-
-        return when (val result = com.vibe.app.data.sync.onlineMutation(queue, queued) { api.createGroup(payload) }) {
-            is ApiResult.Success -> {
-                val server = result.data.toDomain()
-                database.groupDao().upsert(server.toEntity(time.nowMillis()))
-                database.groupDao().upsertMembers(server.members.map { it.toEntity(server.id) })
-                VibeResult.Ok(server)
-            }
-
-            // Offline: the group exists locally and will be created on the API later.
-            is ApiResult.Failure -> if (result.kind == ApiErrorKind.NETWORK || result.kind == ApiErrorKind.SERVER) VibeResult.Ok(local.copy(syncState = SyncState.PENDING)) else { database.groupDao().delete(groupId); result.toProblem() }
+        return runCatching {
+            firestore.createGroup(local)
+        }.getOrElse {
+            // Offline: the group exists locally and will sync to Firestore automatically.
+            VibeResult.Ok(local.copy(syncState = SyncState.PENDING))
         }
     }
 
     suspend fun joinGroup(inviteCode: String): VibeResult<Group> {
         Validators.inviteCode(inviteCode)?.let { return VibeResult.Problem(error = FieldError.INVITE_CODE_INVALID) }
         val code = InviteCode.normalise(inviteCode)
-        return when (val result = apiResult { api.joinGroup(JoinGroupRequest(code)) }) {
-            is ApiResult.Success -> {
-                val group = result.data.toDomain()
-                database.groupDao().upsert(group.toEntity(time.nowMillis()))
-                database.groupDao().upsertMembers(group.members.map { it.toEntity(group.id) })
-                VibeResult.Ok(group)
-            }
+        val uid = settings.currentUserId() ?: return VibeResult.Problem(detail = "Not signed in")
+        val user = database.userDao().byId(uid)
+        val displayName = user?.displayName.orEmpty()
 
-            is ApiResult.Failure -> when (result.httpCode) {
-                404 -> VibeResult.Problem(error = FieldError.INVITE_CODE_INVALID, kind = result.kind)
-                else -> result.toProblem()
+        // Look up the invite code locally first for instant feedback.
+        val cached = database.groupDao().byInviteCode(code)
+        if (cached != null) {
+            return runCatching {
+                firestore.joinGroup(cached.id, uid, displayName)
+            }.getOrElse {
+                VibeResult.Ok(cached.toDomain())
             }
         }
+
+        return VibeResult.Problem(detail = "Invite code not found locally. Go online and try again.")
     }
 
     /** Looks up a code in the local cache so the join screen can confirm first. */
@@ -157,32 +136,25 @@ class GroupRepository(
         return database.groupDao().byInviteCode(InviteCode.normalise(inviteCode))?.toDomain()
     }
 
-    suspend fun deleteGroup(groupId: String): VibeResult<Unit> = when (val r = apiResult { api.deleteGroup(groupId) }) {
-        is ApiResult.Success -> { removeLocally(groupId); VibeResult.Ok(Unit) }
-        is ApiResult.Failure -> r.toProblem()
-    }
+    suspend fun deleteGroup(groupId: String): VibeResult<Unit> =
+        runCatching {
+            firestore.deleteGroup(groupId)
+            withContext(Dispatchers.IO) {
+                database.activityDao().deleteByGroup(groupId)
+                database.groupDao().delete(groupId)
+            }
+            VibeResult.Ok(Unit)
+        }.getOrElse { VibeResult.Problem(detail = it.message ?: "Could not delete group.") }
 
     suspend fun leaveGroup(groupId: String): VibeResult<Unit> {
-        val payload = CreateGroupRequest(name = "", icon = "", clientId = groupId)
-        val queued = queue.enqueue(SyncAction.LEAVE_GROUP, groupId, payload, CreateGroupRequest::class.java)
-        return when (val result = com.vibe.app.data.sync.onlineMutation(queue, queued) { api.leaveGroup(groupId) }) {
-            is ApiResult.Success -> {
-                removeLocally(groupId)
-                VibeResult.Ok(Unit)
+        val uid = settings.currentUserId() ?: return VibeResult.Problem(detail = "Not signed in")
+        return runCatching {
+            firestore.leaveGroup(groupId, uid)
+            withContext(Dispatchers.IO) {
+                database.activityDao().deleteByGroup(groupId)
+                database.groupDao().delete(groupId)
             }
-
-            is ApiResult.Failure -> if (result.kind == com.vibe.app.data.remote.ApiErrorKind.NETWORK) {
-                removeLocally(groupId)
-                queuedOfflineResult()
-            } else {
-                result.toProblem()
-            }
-        }
+            VibeResult.Ok(Unit)
+        }.getOrElse { VibeResult.Problem(detail = it.message ?: "Could not leave group.") }
     }
-
-    private suspend fun removeLocally(groupId: String) {
-        database.activityDao().deleteByGroup(groupId)
-        database.groupDao().delete(groupId)
-    }
-
 }

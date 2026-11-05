@@ -4,10 +4,10 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.google.services)
 }
-// Firebase is optional at compile time, never optional for live cloud operation.
-// Add the real app/google-services.json to enable FCM. No fabricated credentials.
-if (file("google-services.json").exists()) apply(plugin = "com.google.gms.google-services")
+
+apply(plugin = "com.google.gms.google-services")
 
 val local = Properties().apply {
     val f = rootProject.file("local.properties")
@@ -29,10 +29,9 @@ android {
         versionName = setting("VIBE_VERSION_NAME", "2.0.0")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
-        // The existing endpoint is deliberately unchanged. Override for your deployment.
-        buildConfigField("String", "API_BASE_URL", "\"${setting("API_BASE_URL", "https://api.vibeapp.com/")}\"")
+        // GOOGLE_SERVER_CLIENT_ID is used by the Google Sign-In flow via Firebase Authentication.
+        // No API_BASE_URL is needed: the app talks directly to Firebase Auth and Firestore.
         buildConfigField("String", "GOOGLE_SERVER_CLIENT_ID", "\"${setting("GOOGLE_SERVER_CLIENT_ID", "")}\"")
-        buildConfigField("boolean", "FCM_ENABLED", file("google-services.json").exists().toString())
     }
     signingConfigs {
         if (signingFile.exists()) create("upload") {
@@ -84,20 +83,15 @@ dependencies {
     implementation(libs.androidx.exifinterface)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.kotlinx.coroutines.play.services)
-    implementation(libs.retrofit)
-    implementation(libs.retrofit.converter.moshi)
-    implementation(libs.moshi)
-    implementation(libs.moshi.kotlin)
-    implementation(libs.okhttp.logging)
-    implementation(libs.coil)
     implementation(libs.androidx.credentials)
     implementation(libs.androidx.credentials.play.services)
     implementation(libs.googleid)
     implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.auth)
+    implementation(libs.firebase.firestore)
     implementation(libs.firebase.messaging)
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
-    testImplementation(libs.okhttp.mockwebserver)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.test.core)
@@ -110,8 +104,6 @@ tasks.register("preflightRelease") {
     group = "verification"
     doLast {
         val errors = mutableListOf<String>()
-        if (!file("google-services.json").exists()) errors += "Add app/google-services.json for FCM."
-        if (setting("API_BASE_URL", "https://api.vibeapp.com/") == "https://api.vibeapp.com/") errors += "Set API_BASE_URL to the deployed HTTPS REST API."
         if (setting("GOOGLE_SERVER_CLIENT_ID", "").isBlank()) errors += "Set GOOGLE_SERVER_CLIENT_ID to the Firebase/Google web client ID."
         if (!signingFile.exists()) errors += "Configure keystore.properties with your private upload key."
         check(errors.isEmpty()) { errors.joinToString("\n") }
