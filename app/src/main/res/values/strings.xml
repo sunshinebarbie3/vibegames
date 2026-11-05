@@ -426,7 +426,7 @@
   <string name="error_plan_first">Save a plan first.</string>
   <string name="privacy_help">Other members can see your profile photo only in shared groups.</string>
   <string name="group_leave_confirm">Leave this group? Your pending changes must be synced first.")</string>
-  <string name="auth_google_missing_client_id">Google sign-in is not configured in this app build. Set GOOGLE_SERVER_CLIENT_ID to your Google Web client ID, then rebuild.</string>
+  <string name="auth_google_missing_client_id">Google sign-in is not configured in this app build. Set GOOGLE_SERVER_CLIENT_ID or add a google-services.json containing the Google Web client ID, then rebuild.</string>
   <string name="auth_google_api_not_configured">The VIBE API address is not configured. Set API_BASE_URL to the deployed HTTPS API URL ending in /, then rebuild.</string>
   <string name="auth_google_picker_failed">Google account selection could not start. Check that Google Play services is available, then try again.</string>
   <string name="auth_google_api_unreachable">Could not reach the VIBE API. Check your internet connection and API_BASE_URL.</string>
