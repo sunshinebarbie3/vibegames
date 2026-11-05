@@ -40,15 +40,15 @@ class VibeContainer private constructor(private val context: Context) {
     val api: VibeApi = builder(client).build().create(VibeApi::class.java)
     val imageLoader: ImageLoader = ImageLoader.Builder(context).okHttpClient(client).crossfade(true).build()
     val media = MediaRepository(api, PhotoStore(context))
-    val googleSignIn = GoogleSignInGateway(context)
     val syncQueue = SyncQueue(database, moshi, time)
     val syncManager = SyncManager(api, database, connectivity, appScope, settings, moshi, media)
-    val authRepository = AuthRepository(api, database, settings, syncQueue, media, googleSignIn)
+    val authRepository = AuthRepository(api, database, settings, syncQueue, media)
     val groupRepository = GroupRepository(api, database, syncQueue, settings, time)
     val activityRepository = ActivityRepository(api, database, syncQueue, settings, time)
     val decisionRepository = DecisionRepository(api, database, syncQueue, settings, time)
     val memoryRepository = MemoryRepository(api, database, syncQueue, settings, time, media)
     val notificationRepository = NotificationRepository(api, database, settings, time)
+    val googleSignIn = GoogleSignInGateway(context)
     val push = PushGateway(context, notificationRepository)
     init {
         syncQueue.isOnline = { connectivity.isOnline.first() }
