@@ -21,6 +21,8 @@ import com.vibe.app.data.remote.VibeApi
 import com.vibe.app.data.remote.apiResult
 import com.vibe.app.data.remote.toDomain
 import com.vibe.app.data.sync.SyncQueue
+import com.vibe.app.identity.GoogleFirebaseIdentity
+import com.vibe.app.identity.GoogleSignInGateway
 import com.vibe.app.domain.AppLanguage
 import com.vibe.app.domain.SyncAction
 import com.vibe.app.domain.ThemeMode
@@ -47,6 +49,7 @@ class AuthRepository(
     private val settings: SettingsStore,
     private val queue: SyncQueue,
     private val time: TimeProvider,
+    private val googleSignIn: GoogleSignInGateway,
 ) {
 
     val session: Flow<Session?> = settings.session
@@ -81,16 +84,42 @@ class AuthRepository(
         }
     }
 
-    /** PoE: Google Sign-In. The ID token is verified by the API, never on the device. */
-    suspend fun signInWithGoogle(idToken: String): VibeResult<User> {
-        if (idToken.isBlank()) return VibeResult.Problem(detail = "Missing Google ID token")
-        return when (val result = apiResult { api.googleSignIn(GoogleAuthRequest(idToken)) }) {
-            is ApiResult.Success -> signIn(result.data.accessToken, result.data.refreshToken, result.data.user.toDomain())
+    /** Firebase verifies the Google credential; the VIBE API issues the app session. */
+    suspend fun signInWithGoogle(identity: GoogleFirebaseIdentity): VibeResult<User> {
+        if (identity.googleIdToken.isBlank()) {
+            return VibeResult.Problem(detail = "Missing Google ID token")
+        }
+        return when (val result = apiResult {
+            api.googleSignIn(GoogleAuthRequest(identity.googleIdToken))
+        }) {
+            is ApiResult.Success -> {
+                val apiUser = result.data.user.toDomain()
+                val user = apiUser.copy(
+                    displayName = identity.displayName.ifBlank { apiUser.displayName },
+                    email = identity.email.ifBlank { apiUser.email },
+                    photoUri = identity.photoUrl ?: apiUser.photoUri,
+                )
+                signIn(
+                    result.data.accessToken,
+                    result.data.refreshToken,
+                    user,
+                    googleAccountId = identity.googleAccountId,
+                    firebaseUid = identity.firebaseUid,
+                    refreshFromServer = false,
+                )
+            }
             is ApiResult.Failure -> result.toProblem()
         }
     }
 
-    private suspend fun signIn(accessToken: String, refreshToken: String, user: User): VibeResult<User> {
+    private suspend fun signIn(
+        accessToken: String,
+        refreshToken: String,
+        user: User,
+        googleAccountId: String? = null,
+        firebaseUid: String? = null,
+        refreshFromServer: Boolean = true,
+    ): VibeResult<User> {
         database.userDao().upsert(user.toEntity())
         settings.saveSession(
             Session(
@@ -99,16 +128,18 @@ class AuthRepository(
                 email = user.email,
                 accessToken = accessToken,
                 refreshToken = refreshToken,
+                googleAccountId = googleAccountId,
+                firebaseUid = firebaseUid,
             ),
         )
-        // The cached profile is refreshed in the background; a failure here does
-        // not block sign-in because RoomDB already has a usable copy.
-        refreshProfile()
+        // Keep provider claims until the backend profile has caught up.
+        if (refreshFromServer) refreshProfile()
         return VibeResult.Ok(user)
     }
 
     suspend fun logout() {
         apiResult { api.logout() }
+        runCatching { googleSignIn.signOut() }
         settings.clearSession()
         // Cached group data is member data: it is wiped so the next person on the
         // device cannot read it. Pending offline work is kept out of the wipe only

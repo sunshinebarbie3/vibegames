@@ -1,5 +1,6 @@
 package com.vibe.app.ui.screens
 
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,6 +29,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -170,22 +172,30 @@ class AuthViewModel(
         }
     }
 
-    /** PoE: Google SSO through Credential Manager; the API verifies the token. */
-    fun signInWithGoogle(onSuccess: () -> Unit) {
+    /** Credential Manager selects the Google account; Firebase verifies it before API exchange. */
+    fun signInWithGoogle(activityContext: Context, onSuccess: () -> Unit) {
         state = state.copy(loading = true, error = null, message = null)
         viewModelScope.launch {
-            val token = googleSignIn.requestIdToken()
-            if (token.isFailure) {
-                state = state.copy(loading = false, message = AuthMessage.GoogleNotConfigured)
+            val identityResult = googleSignIn.signIn(activityContext)
+            if (identityResult.isFailure) {
+                val cancelled = identityResult.exceptionOrNull() is
+                    androidx.credentials.exceptions.GetCredentialCancellationException
+                state = state.copy(
+                    loading = false,
+                    message = if (cancelled) null else AuthMessage.GoogleNotConfigured,
+                )
                 return@launch
             }
-            when (val result = repository.signInWithGoogle(token.getOrThrow())) {
+            when (val result = repository.signInWithGoogle(identityResult.getOrThrow())) {
                 is VibeResult.Ok -> {
                     state = state.copy(loading = false, showPassword = false)
                     onSuccess()
                 }
 
-                is VibeResult.Problem -> state = state.copy(loading = false, message = AuthMessage.LoginFailed)
+                is VibeResult.Problem -> state = state.copy(
+                    loading = false,
+                    message = if (result.kind == ApiErrorKind.NETWORK) AuthMessage.Offline else AuthMessage.LoginFailed,
+                )
             }
         }
     }
@@ -227,6 +237,7 @@ private fun AuthMessageView(message: AuthMessage?) {
 @Composable
 fun LoginScreen(onSignedIn: () -> Unit, onGoToRegister: () -> Unit) {
     val viewModel = vibeViewModel { AuthViewModel(it.authRepository, it.googleSignIn) }
+    val activityContext = LocalContext.current
 
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -299,7 +310,7 @@ fun LoginScreen(onSignedIn: () -> Unit, onGoToRegister: () -> Unit) {
             label = stringResource(R.string.continue_with_google),
             enabled = !viewModel.state.loading,
         ) {
-            viewModel.signInWithGoogle(onSignedIn)
+            viewModel.signInWithGoogle(activityContext, onSignedIn)
         }
         Spacer(modifier = Modifier.height(12.dp))
 

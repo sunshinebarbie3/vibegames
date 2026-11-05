@@ -22,6 +22,8 @@ data class Session(
     val email: String,
     val accessToken: String,
     val refreshToken: String,
+    val googleAccountId: String? = null,
+    val firebaseUid: String? = null,
 )
 
 /** Locally owned settings: theme, language, alerts, privacy and onboarding. */
@@ -51,6 +53,8 @@ class SettingsStore(context: Context) {
         val USER_EMAIL = stringPreferencesKey("user_email")
         val ACCESS_TOKEN = stringPreferencesKey("access_token")
         val REFRESH_TOKEN = stringPreferencesKey("refresh_token")
+        val GOOGLE_ACCOUNT_ID = stringPreferencesKey("google_account_id")
+        val FIREBASE_UID = stringPreferencesKey("firebase_uid")
         val THEME = stringPreferencesKey("theme_mode")
         val LANGUAGE = stringPreferencesKey("language")
         val NOTIFICATIONS = booleanPreferencesKey("notifications_enabled")
@@ -68,6 +72,8 @@ class SettingsStore(context: Context) {
             email = prefs[Keys.USER_EMAIL].orEmpty(),
             accessToken = prefs[Keys.ACCESS_TOKEN].orEmpty(),
             refreshToken = prefs[Keys.REFRESH_TOKEN].orEmpty(),
+            googleAccountId = prefs[Keys.GOOGLE_ACCOUNT_ID],
+            firebaseUid = prefs[Keys.FIREBASE_UID],
         )
     }
 
@@ -94,6 +100,10 @@ class SettingsStore(context: Context) {
             prefs[Keys.USER_EMAIL] = session.email
             prefs[Keys.ACCESS_TOKEN] = session.accessToken
             prefs[Keys.REFRESH_TOKEN] = session.refreshToken
+            session.googleAccountId?.let { prefs[Keys.GOOGLE_ACCOUNT_ID] = it }
+                ?: prefs.remove(Keys.GOOGLE_ACCOUNT_ID)
+            session.firebaseUid?.let { prefs[Keys.FIREBASE_UID] = it }
+                ?: prefs.remove(Keys.FIREBASE_UID)
         }
     }
 
@@ -108,6 +118,8 @@ class SettingsStore(context: Context) {
             prefs.remove(Keys.USER_EMAIL)
             prefs.remove(Keys.ACCESS_TOKEN)
             prefs.remove(Keys.REFRESH_TOKEN)
+            prefs.remove(Keys.GOOGLE_ACCOUNT_ID)
+            prefs.remove(Keys.FIREBASE_UID)
         }
     }
 

@@ -6,6 +6,12 @@ plugins {
     alias(libs.plugins.ksp)
 }
 
+// The repository has no private Firebase config by default. Apply Google services
+// only after a project-specific google-services.json has been supplied.
+if (file("google-services.json").exists()) {
+    apply(plugin = "com.google.gms.google-services")
+}
+
 android {
     namespace = "com.vibe.app"
     compileSdk = 37
@@ -101,6 +107,7 @@ dependencies {
 
     // Coroutines + networking (ASP.NET Core REST API over HTTPS)
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.kotlinx.coroutines.play.services)
     implementation(libs.retrofit)
     implementation(libs.retrofit.converter.moshi)
     implementation(libs.moshi)
@@ -116,6 +123,7 @@ dependencies {
     implementation(libs.googleid)
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.messaging)
+    implementation(libs.firebase.auth)
 
     // Local JVM tests (decision engine, sync queue, validation, API mapping)
     testImplementation(libs.junit)
