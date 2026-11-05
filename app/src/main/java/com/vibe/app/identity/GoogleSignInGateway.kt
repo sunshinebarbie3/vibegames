@@ -25,15 +25,29 @@ class GoogleSignInGateway(
     private val serverClientId: String = BuildConfig.GOOGLE_SERVER_CLIENT_ID,
 ) {
 
-    val isConfigured: Boolean get() = serverClientId.isNotBlank()
+    private fun resolvedServerClientId(): String {
+        if (serverClientId.isNotBlank()) return serverClientId.trim()
+        val resourceId = context.resources.getIdentifier(
+            "default_web_client_id",
+            "string",
+            context.packageName,
+        )
+        return if (resourceId == 0) "" else context.getString(resourceId).trim()
+    }
+
+    val isConfigured: Boolean get() = resolvedServerClientId().isNotBlank()
+
+    fun setupIssue(): GoogleSignInSetupIssue? =
+        googleSignInSetupIssue(resolvedServerClientId(), BuildConfig.API_BASE_URL)
 
     suspend fun requestIdToken(activityContext: Context = context): Result<String> = runCatching {
-        check(isConfigured) { "GOOGLE_SERVER_CLIENT_ID is not configured" }
+        val webClientId = resolvedServerClientId()
+        check(webClientId.isNotBlank()) { "Google Web client ID is not configured" }
 
         val credentialManager = CredentialManager.create(activityContext)
         val googleIdOption = GetGoogleIdOption.Builder()
             .setFilterByAuthorizedAccounts(false)
-            .setServerClientId(serverClientId)
+            .setServerClientId(webClientId)
             .setAutoSelectEnabled(false)
             .build()
 

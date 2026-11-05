@@ -426,4 +426,10 @@
   <string name="error_plan_first">Gcina uhlelo kuqala.</string>
   <string name="privacy_help">Amalungu abona isithombe sakho emaqenjini eniwabelana ngawo kuphela.</string>
   <string name="group_leave_confirm">Shiya leli qembu?</string>
+  <string name="auth_google_missing_client_id">Ukungena nge-Google akukalungiselelwa kulolu hlelo lokusebenza. Setha i-GOOGLE_SERVER_CLIENT_ID noma wengeze i-google-services.json equkethe i-Google Web client ID, bese wakha kabusha uhlelo lokusebenza.</string>
+  <string name="auth_google_api_not_configured">Ikheli le-VIBE API alikalungiselelwa. Setha i-API_BASE_URL ibe ikheli le-HTTPS le-API eselithunyelwe, eligcina ngo-/, bese wakha kabusha uhlelo lokusebenza.</string>
+  <string name="auth_google_picker_failed">Ukukhetha i-akhawunti ye-Google akuphumelelanga. Hlola ukuthi i-Google Play services iyatholakala, bese uzama futhi.</string>
+  <string name="auth_google_api_unreachable">Ayikwazanga ukufinyelela i-VIBE API. Hlola uxhumano lwe-inthanethi kanye ne-API_BASE_URL.</string>
+  <string name="auth_google_server_error">Ukungena nge-Google kufinyelele ku-VIBE API, kodwa iseva ayikwazanga ukukuqedela. Hlola ukuthi i-Google ivuliwe nokuthi iseva isebenzisa i-Web client ID efanayo.</string>
+  <string name="auth_google_token_rejected">I-Google yenqabile ithokheni yokungena. Hlola ukuthi iphakheji ye-Android ne-SHA-1 zibhalisiwe nokuthi uhlelo lokusebenza ne-API zisebenzisa i-Web client ID efanayo.</string>
 </resources>

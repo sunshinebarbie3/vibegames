@@ -426,4 +426,10 @@
   <string name="error_plan_first">Boloka leano pele.</string>
   <string name="privacy_help">Ditho di bona setshwantsho sa hao dihlopheng tseo le di arolelanang feela.</string>
   <string name="group_leave_confirm">Tloha sehlopheng see?</string>
+  <string name="auth_google_missing_client_id">Ho kena ka Google ha ho so hlophiswe moahong ona wa app. Beha GOOGLE_SERVER_CLIENT_ID kapa o kenye google-services.json e nang le Google Web client ID, ebe o aha app hape.</string>
+  <string name="auth_google_api_not_configured">Aterese ya VIBE API ha e so hlophiswe. Beha API_BASE_URL atereseng ya HTTPS ya API e seng e phatlaladitswe, e qetellang ka /, ebe o aha app hape.</string>
+  <string name="auth_google_picker_failed">Ho kgetha akhaonto ya Google ha hoa qala. Netefatsa hore Google Play services e a fumaneha, ebe o leka hape.</string>
+  <string name="auth_google_api_unreachable">Ha ho kgonehe ho fihlella VIBE API. Lekola kgokelo ya inthanete le API_BASE_URL.</string>
+  <string name="auth_google_server_error">Ho kena ka Google ho fihletse VIBE API, empa seva ha e a kgona ho qeta. Netefatsa hore Google e buletswe le hore seva e sebedisa Web client ID e tshwanang.</string>
+  <string name="auth_google_token_rejected">Google e hanne token ya ho kena. Netefatsa hore sephutheloana sa Android le SHA-1 di ngodisitswe le hore app le API di sebedisa Web client ID e tshwanang.</string>
 </resources>
