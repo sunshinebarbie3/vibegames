@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:orientation="vertical" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@color/canvas" android:fitsSystemWindows="true">
+  <com.google.android.material.appbar.MaterialToolbar android:id="@+id/toolbar" android:layout_width="match_parent" android:layout_height="?attr/actionBarSize" android:title="@string/app_name" android:titleTextColor="@color/text_primary" />
+  <TextView android:id="@+id/offlineBanner" android:text="@string/state_offline" android:textSize="16sp" android:textColor="@color/vibe_ink" android:layout_width="match_parent" android:layout_height="wrap_content" style="@style/VibeBody" android:padding="12dp" android:background="@color/vibe_lilac_soft" android:visibility="gone" android:gravity="center" />
+  <androidx.fragment.app.FragmentContainerView android:id="@+id/navHost" android:name="androidx.navigation.fragment.NavHostFragment" app:defaultNavHost="true" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" />
+  <com.google.android.material.bottomnavigation.BottomNavigationView android:id="@+id/bottomNav" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="@color/surface" />
+</LinearLayout>

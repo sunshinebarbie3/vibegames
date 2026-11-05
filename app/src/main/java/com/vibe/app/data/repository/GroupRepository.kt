@@ -8,6 +8,7 @@ import com.vibe.app.data.local.VibeDatabase
 import com.vibe.app.data.local.toDomain
 import com.vibe.app.data.local.toEntity
 import com.vibe.app.data.prefs.SettingsStore
+import com.vibe.app.data.remote.ApiErrorKind
 import com.vibe.app.data.remote.ApiResult
 import com.vibe.app.data.remote.CreateGroupRequest
 import com.vibe.app.data.remote.JoinGroupRequest
@@ -58,8 +59,9 @@ class GroupRepository(
         )
     }
 
-    suspend fun refresh(): VibeResult<Int> =
-        when (val result = apiResult { api.groups() }) {
+    suspend fun refresh(): VibeResult<Int> {
+        if (database.syncQueueDao().count() > 0) return VibeResult.Ok(0)
+        return when (val result = apiResult { api.groups() }) {
             is ApiResult.Success -> {
                 val now = time.nowMillis()
                 result.data.forEach { dto ->
@@ -69,9 +71,9 @@ class GroupRepository(
                 }
                 VibeResult.Ok(result.data.size)
             }
-
             is ApiResult.Failure -> result.toProblem()
         }
+    }
 
     suspend fun refreshGroup(groupId: String): VibeResult<Group> =
         when (val result = apiResult { api.group(groupId) }) {
@@ -115,10 +117,10 @@ class GroupRepository(
         database.groupDao().upsert(local.toEntity(now))
         database.groupDao().upsertMembers(local.members.map { it.toEntity(groupId) })
 
-        val payload = CreateGroupRequest(name = local.name, icon = local.icon, clientId = groupId)
-        queue.enqueue(SyncAction.CREATE_GROUP, groupId, payload, CreateGroupRequest::class.java)
+        val payload = CreateGroupRequest(name = local.name, icon = local.icon, clientId = groupId, inviteCode = local.inviteCode)
+        val queued = queue.enqueue(SyncAction.CREATE_GROUP, groupId, payload, CreateGroupRequest::class.java)
 
-        return when (val result = apiResult { api.createGroup(payload) }) {
+        return when (val result = com.vibe.app.data.sync.onlineMutation(queue, queued) { api.createGroup(payload) }) {
             is ApiResult.Success -> {
                 val server = result.data.toDomain()
                 database.groupDao().upsert(server.toEntity(time.nowMillis()))
@@ -127,7 +129,7 @@ class GroupRepository(
             }
 
             // Offline: the group exists locally and will be created on the API later.
-            is ApiResult.Failure -> VibeResult.Ok(local.copy(syncState = SyncState.PENDING))
+            is ApiResult.Failure -> if (result.kind == ApiErrorKind.NETWORK || result.kind == ApiErrorKind.SERVER) VibeResult.Ok(local.copy(syncState = SyncState.PENDING)) else { database.groupDao().delete(groupId); result.toProblem() }
         }
     }
 
@@ -155,10 +157,15 @@ class GroupRepository(
         return database.groupDao().byInviteCode(InviteCode.normalise(inviteCode))?.toDomain()
     }
 
+    suspend fun deleteGroup(groupId: String): VibeResult<Unit> = when (val r = apiResult { api.deleteGroup(groupId) }) {
+        is ApiResult.Success -> { removeLocally(groupId); VibeResult.Ok(Unit) }
+        is ApiResult.Failure -> r.toProblem()
+    }
+
     suspend fun leaveGroup(groupId: String): VibeResult<Unit> {
         val payload = CreateGroupRequest(name = "", icon = "", clientId = groupId)
-        queue.enqueue(SyncAction.LEAVE_GROUP, groupId, payload, CreateGroupRequest::class.java)
-        return when (val result = apiResult { api.leaveGroup(groupId) }) {
+        val queued = queue.enqueue(SyncAction.LEAVE_GROUP, groupId, payload, CreateGroupRequest::class.java)
+        return when (val result = com.vibe.app.data.sync.onlineMutation(queue, queued) { api.leaveGroup(groupId) }) {
             is ApiResult.Success -> {
                 removeLocally(groupId)
                 VibeResult.Ok(Unit)

@@ -1,26 +1,22 @@
 package com.vibe.app
 
 import android.app.Application
+import coil.Coil
 import com.vibe.app.core.VibeContainer
+import com.vibe.app.notifications.VibeMessagingService
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
-/**
- * Application entry point.
- *
- * Responsibilities:
- *  - own the single [VibeContainer] instance so the local cache, the offline
- *    queue and the sync worker all talk to the same objects;
- *  - start the sync manager, so a change queued while the device was offline is
- *    pushed to the API the moment the connection comes back.
- */
 class VibeApplication : Application() {
-
-    lateinit var container: VibeContainer
-        private set
-
+    lateinit var container: VibeContainer private set
     override fun onCreate() {
         super.onCreate()
         container = VibeContainer.provide(this)
-        container.appScope.launch { container.syncManager.syncNow() }
+        Coil.setImageLoader(container.imageLoader)
+        VibeMessagingService.ensureChannel(this)
+        container.appScope.launch {
+            val settings = container.settings.settings.first()
+            com.vibe.app.core.LocaleManager.apply(settings.language)
+        }
     }
 }

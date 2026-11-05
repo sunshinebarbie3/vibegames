@@ -69,6 +69,7 @@ class NotificationRepository(
     /** Called after Firebase hands us a (possibly rotated) registration token. */
     suspend fun registerDeviceToken(token: String) {
         settings.setFcmToken(token)
+        if (settings.currentUserId() == null) return
         apiResult { api.registerDevice(RegisterDeviceRequest(fcmToken = token)) }
     }
 
@@ -76,14 +77,14 @@ class NotificationRepository(
      * Mirrors a push payload into the local inbox. The messaging service calls
      * this so an alert is readable offline and is localised on the device.
      */
-    suspend fun mirrorPush(title: String, body: String, type: NotificationType, groupId: String? = null) {
+    suspend fun mirrorPush(title: String, body: String, type: NotificationType, groupId: String? = null, notificationId: String? = null) {
         val userId = settings.currentUserId() ?: return
         // Respect the privacy/alert toggle: nothing is stored if the member
         // switched notifications off.
         if (!settings.settings.first().notificationsEnabled) return
         database.notificationDao().upsert(
             NotificationEntity(
-                id = Ids.newId(),
+                id = notificationId ?: Ids.newId(),
                 userId = userId,
                 title = title,
                 body = body,

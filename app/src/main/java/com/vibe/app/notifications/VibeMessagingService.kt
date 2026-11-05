@@ -20,6 +20,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 
 /**
  * PoE: real-time prompts through Firebase Cloud Messaging.
@@ -47,11 +49,14 @@ class VibeMessagingService : FirebaseMessagingService() {
         }.getOrDefault(NotificationType.NEW_ACTIVITY)
 
         val groupId = message.data["groupId"]
-        val title = message.data["title"] ?: localisedTitle(type)
-        val body = message.data["body"] ?: localisedBody(type)
+        val title = localisedTitle(type)
+        val body = localisedBody(type)
 
-        scope.launch { container.notificationRepository.mirrorPush(title, body, type, groupId) }
-        showNotification(title, body)
+        runBlocking(Dispatchers.IO) {
+            if (!container.settings.settings.first().notificationsEnabled) return@runBlocking
+            container.notificationRepository.mirrorPush(title, body, type, groupId, message.data["id"])
+            showNotification(title, body)
+        }
     }
 
     /** Alerts follow the chosen language: the copy is resolved from resources. */
@@ -84,6 +89,7 @@ class VibeMessagingService : FirebaseMessagingService() {
 
         val intent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra(EXTRA_OPEN_INBOX, true)
         }
         val pendingIntent = PendingIntent.getActivity(
             this,
@@ -106,6 +112,7 @@ class VibeMessagingService : FirebaseMessagingService() {
 
     companion object {
         const val CHANNEL_PLANS = "vibe_plans"
+        const val EXTRA_OPEN_INBOX = "open_inbox"
 
         /** Called from the application and from the service before posting. */
         fun ensureChannel(context: Context) {

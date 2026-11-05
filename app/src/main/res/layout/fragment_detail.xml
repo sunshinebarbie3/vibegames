@@ -1,0 +1,18 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent" android:fillViewport="true" android:background="@color/canvas">
+  <LinearLayout android:orientation="vertical" android:padding="20dp" android:layout_width="match_parent" android:layout_height="wrap_content">
+    <TextView android:id="@+id/icon" android:text="" android:textSize="52sp" android:textColor="@color/text_primary" android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center" />
+    <TextView android:id="@+id/heading" android:text="" android:textSize="26sp" android:textColor="@color/text_primary" android:layout_width="match_parent" android:layout_height="wrap_content" android:textStyle="bold" android:gravity="center" />
+    <TextView android:id="@+id/body" android:text="" android:textSize="16sp" android:textColor="@color/text_secondary" android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingTop="16dp" android:lineSpacingExtra="4dp" />
+    <TextView android:id="@+id/meta" android:text="" android:textSize="16sp" android:textColor="@color/text_secondary" android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingTop="12dp" />
+    <com.google.android.material.chip.ChipGroup android:id="@+id/filters" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" />
+    <androidx.recyclerview.widget.RecyclerView android:id="@+id/list" android:layout_width="match_parent" android:layout_height="wrap_content" android:nestedScrollingEnabled="false" android:paddingTop="12dp" />
+    <ImageView android:id="@+id/photo" android:contentDescription="@string/cd_memory_photo" android:layout_width="match_parent" android:layout_height="220dp" android:scaleType="centerCrop" android:visibility="gone" android:layout_marginTop="12dp" />
+    <com.google.android.material.button.MaterialButton android:id="@+id/primary" android:text="@string/action_save" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" style="Widget.Material3.Button" />
+    <com.google.android.material.button.MaterialButton android:id="@+id/secondary" android:text="@string/action_save" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" style="Widget.Material3.Button.OutlinedButton" />
+    <com.google.android.material.button.MaterialButton android:id="@+id/tertiary" android:text="@string/action_save" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" style="Widget.Material3.Button.OutlinedButton" />
+    <com.google.android.material.button.MaterialButton android:id="@+id/delete" android:text="@string/action_save" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" style="Widget.Material3.Button.OutlinedButton" />
+    <com.google.android.material.button.MaterialButton android:id="@+id/extra" android:text="@string/action_save" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" style="Widget.Material3.Button.OutlinedButton" />
+    <com.google.android.material.button.MaterialButton android:id="@+id/manage" android:text="@string/action_save" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" style="Widget.Material3.Button.OutlinedButton" />
+  </LinearLayout>
+</ScrollView>

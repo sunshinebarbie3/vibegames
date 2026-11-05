@@ -22,3 +22,16 @@ api-container/**/*.db-*
 
 # OS
 .DS_Store
+
+# Firebase / release / server secrets and local tooling
+.env
+.env.*
+!.env.example
+server/node_modules/
+server/.data/
+service-account*.json
+google-services.json
+keystore.properties
+*.jks
+*.keystore
+.tooling/

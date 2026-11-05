@@ -1,0 +1,7 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Uploads and reads are authorized by the REST API and streamed privately.
+    match /{object=**} { allow read, write: if false; }
+  }
+}

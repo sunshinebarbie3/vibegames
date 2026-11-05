@@ -1,0 +1,7 @@
+{
+  "indexes": [
+    { "collectionGroup": "activities", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "groupId", "order": "ASCENDING" }, { "fieldPath": "createdAtEpochMillis", "order": "DESCENDING" }] },
+    { "collectionGroup": "notifications", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "userId", "order": "ASCENDING" }, { "fieldPath": "createdAtEpochMillis", "order": "DESCENDING" }] }
+  ],
+  "fieldOverrides": []
+}

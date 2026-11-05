@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='utf-8'?>
+<androidx.swiperefreshlayout.widget.SwipeRefreshLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent">
+  <FrameLayout android:layout_width="match_parent" android:layout_height="match_parent">
+    <androidx.recyclerview.widget.RecyclerView android:id="@+id/list" android:layout_width="match_parent" android:layout_height="match_parent" android:padding="16dp" android:clipToPadding="false" />
+    <LinearLayout android:id="@+id/empty" android:orientation="vertical" android:gravity="center" android:padding="28dp" android:layout_width="match_parent" android:layout_height="match_parent" android:visibility="gone">
+      <TextView android:id="@+id/emptyTitle" android:text="@string/home_empty_title" android:textSize="16sp" android:textColor="@color/text_primary" android:layout_width="match_parent" android:layout_height="wrap_content" style="@style/VibeTitle" android:gravity="center" />
+      <TextView android:id="@+id/emptyBody" android:text="@string/home_empty_body" android:textSize="16sp" android:textColor="@color/text_primary" android:layout_width="match_parent" android:layout_height="wrap_content" style="@style/VibeBody" android:gravity="center" android:paddingTop="12dp" />
+      <com.google.android.material.button.MaterialButton android:id="@+id/emptyAction" android:text="@string/action_create_group" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" style="@style/VibeButton" />
+    </LinearLayout>
+  </FrameLayout>
+</androidx.swiperefreshlayout.widget.SwipeRefreshLayout>

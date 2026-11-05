@@ -1,0 +1,8 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Only the Admin SDK REST API can access member data. Never expose the
+    // service account to the Android app or enable unauthenticated client reads.
+    match /{document=**} { allow read, write: if false; }
+  }
+}

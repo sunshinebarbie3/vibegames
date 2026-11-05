@@ -2,6 +2,7 @@ package com.vibe.app.core
 
 import com.vibe.app.data.remote.ApiErrorKind
 import com.vibe.app.data.remote.ApiResult
+import com.vibe.app.data.local.SyncItemEntity
 import com.vibe.app.domain.FieldError
 
 /**

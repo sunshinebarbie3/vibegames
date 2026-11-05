@@ -1,13 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Dark theme is the VIBE default: midnight navy canvas. -->
+<resources>
     <style name="Base.Theme.VIBE" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="colorPrimary">@color/vibe_coral</item>
+        <item name="colorOnPrimary">@color/action_ink</item>
         <item name="colorSecondary">@color/vibe_lilac</item>
         <item name="colorTertiary">@color/vibe_mint</item>
-        <item name="android:windowBackground">@color/vibe_navy</item>
-        <item name="android:statusBarColor">@color/vibe_navy</item>
-        <item name="android:navigationBarColor">@color/vibe_navy</item>
-        <item name="android:windowLightStatusBar" tools:targetApi="m">false</item>
+        <item name="colorSurface">@color/surface</item>
+        <item name="colorOnSurface">@color/text_primary</item>
+        <item name="colorOnSurfaceVariant">@color/text_secondary</item>
+        <item name="android:windowBackground">@color/canvas</item>
+        <item name="android:statusBarColor">@color/canvas</item>
+        <item name="android:navigationBarColor">@color/canvas</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:fontFamily">sans</item>
+        <item name="materialButtonStyle">@style/VibeButton</item>
+        <item name="textInputStyle">@style/VibeInput</item>
     </style>
 </resources>
