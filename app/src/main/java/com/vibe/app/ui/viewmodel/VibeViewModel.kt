@@ -22,8 +22,6 @@ class VibeViewModel(val c: VibeContainer) : ViewModel() {
     val activities: StateFlow<List<Activity>> = c.activityRepository.observeAll().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     val memories: StateFlow<List<Memory>> = c.memoryRepository.memories.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     val notifications: StateFlow<List<VibeNotification>> = c.notificationRepository.notifications.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-    val pending = c.syncManager.pendingCount.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
-    val conflicts = c.syncManager.conflicts.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     val online = c.connectivity.isOnline.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
     private val _message = MutableSharedFlow<Int>(extraBufferCapacity = 4)
     val message = _message.asSharedFlow()
@@ -32,7 +30,15 @@ class VibeViewModel(val c: VibeContainer) : ViewModel() {
     init { viewModelScope.launch { session.filterNotNull().collect { refresh() } } }
     fun message(res: Int) { _message.tryEmit(res) }
     fun refresh() { viewModelScope.launch { c.refreshAll() } }
-    fun sync() { viewModelScope.launch { _busy.value = true; val result = c.syncManager.syncNow(); _busy.value = false; message(if (result is VibeResult.Ok && c.database.syncQueueDao().count() == 0) com.vibe.app.R.string.settings_sync_done else com.vibe.app.R.string.settings_sync_failed) } }
+    fun sync() {
+        // Firestore handles offline sync natively via persistence. Trigger a refresh
+        // of all data from Firestore when the user pulls to sync.
+        viewModelScope.launch {
+            _busy.value = true
+            try { c.refreshAll() } catch (e: Exception) { message(com.vibe.app.R.string.settings_sync_failed) }
+            finally { _busy.value = false; message(com.vibe.app.R.string.settings_sync_done) }
+        }
+    }
     fun <T> action(block: suspend () -> VibeResult<T>, done: (VibeResult<T>) -> Unit = {}) {
         if (_busy.value) return
         viewModelScope.launch {

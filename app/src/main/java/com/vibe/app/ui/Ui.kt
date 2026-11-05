@@ -11,7 +11,6 @@ import com.vibe.app.R
 import com.vibe.app.VibeApplication
 import com.vibe.app.core.VibeContainer
 import com.vibe.app.core.VibeResult
-import com.vibe.app.data.remote.ApiErrorKind
 import com.vibe.app.databinding.ItemCardBinding
 import com.vibe.app.domain.FieldError
 import kotlinx.coroutines.flow.Flow
@@ -44,9 +43,9 @@ fun VibeResult.Problem.messageRes(): Int = error?.let { when (it) {
     FieldError.NOT_ENOUGH_ACTIVITIES -> R.string.error_not_enough_activities
     FieldError.OWNER_ONLY -> R.string.error_owner_only
 } } ?: when (kind) {
-    ApiErrorKind.NETWORK -> R.string.error_network
-    ApiErrorKind.UNAUTHORISED -> R.string.error_auth
-    ApiErrorKind.SERVER -> R.string.error_server
+    ProblemKind.NETWORK -> R.string.error_network
+    ProblemKind.UNAUTHORISED -> R.string.error_auth
+    ProblemKind.SERVER -> R.string.error_server
     else -> R.string.error_generic
 }
 fun Fragment.showResult(result: VibeResult<*>, success: Int? = null): Boolean {
@@ -56,7 +55,6 @@ fun Fragment.showResult(result: VibeResult<*>, success: Int? = null): Boolean {
 fun Fragment.confirm(title: Int, message: Int, action: () -> Unit) {
     com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext()).setTitle(title).setMessage(message).setNegativeButton(R.string.action_cancel, null).setPositiveButton(R.string.action_confirm) { _, _ -> action() }.show()
 }
-fun String.blobUrl(): String = if (startsWith("vibe-blob://")) com.vibe.app.BuildConfig.API_BASE_URL + "api/v1/media/" + removePrefix("vibe-blob://") else this
 
 data class CardItem(val id: String, val icon: String, val title: String, val subtitle: String = "", val badge: String = "")
 class CardAdapter(private val click: (CardItem) -> Unit) : ListAdapter<CardItem, CardAdapter.Holder>(Diff) {

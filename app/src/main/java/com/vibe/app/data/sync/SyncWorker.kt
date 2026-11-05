@@ -4,17 +4,24 @@ import android.content.Context
 import androidx.work.*
 import com.vibe.app.VibeApplication
 import com.vibe.app.core.VibeResult
-import com.vibe.app.data.remote.ApiErrorKind
 import java.util.concurrent.TimeUnit
 
+/**
+ * WorkManager worker that triggers a Firestore refresh when the device
+ * reconnects. Firestore persistence handles offline sync natively, so this
+ * worker simply refreshes cached data from the server.
+ */
 class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
         val container = (applicationContext as VibeApplication).container
-        return when (val result = container.syncManager.syncNow()) {
-            is VibeResult.Ok -> Result.success()
-            is VibeResult.Problem -> if (result.kind == ApiErrorKind.NETWORK || result.kind == ApiErrorKind.SERVER) Result.retry() else Result.success()
+        try {
+            container.refreshAll()
+            return Result.success()
+        } catch (e: Exception) {
+            return Result.retry()
         }
     }
+
     companion object {
         fun schedule(context: Context) {
             val request = OneTimeWorkRequestBuilder<SyncWorker>()

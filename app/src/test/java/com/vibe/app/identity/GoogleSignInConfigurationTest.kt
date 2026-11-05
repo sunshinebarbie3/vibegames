@@ -6,31 +6,15 @@ import org.junit.Test
 
 class GoogleSignInConfigurationTest {
     @Test
-    fun missingWebClientIdIsReportedBeforeTheApiUrl() {
+    fun missingWebClientIdIsReported() {
         assertEquals(
             GoogleSignInSetupIssue.WEB_CLIENT_ID_MISSING,
-            googleSignInSetupIssue("  ", "https://api.example.com/"),
+            googleSignInSetupIssue("  "),
         )
     }
 
     @Test
-    fun rejectsInsecureAndPlaceholderApiUrls() {
-        assertEquals(
-            GoogleSignInSetupIssue.API_URL_NOT_HTTPS,
-            googleSignInSetupIssue("web-client-id", "http://api.example.com/"),
-        )
-        assertEquals(
-            GoogleSignInSetupIssue.API_URL_IS_PLACEHOLDER,
-            googleSignInSetupIssue("web-client-id", "https://api.vibeapp.com/"),
-        )
-    }
-
-    @Test
-    fun requiresTrailingSlashAndAcceptsConfiguredHttpsApi() {
-        assertEquals(
-            GoogleSignInSetupIssue.API_URL_MISSING_TRAILING_SLASH,
-            googleSignInSetupIssue("web-client-id", "https://api.example.com"),
-        )
-        assertNull(googleSignInSetupIssue("web-client-id", "https://api.example.com/"))
+    fun configuredWebClientIdHasNoIssue() {
+        assertNull(googleSignInSetupIssue("web-client-id"))
     }
 }

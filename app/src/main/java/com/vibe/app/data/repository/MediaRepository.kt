@@ -6,21 +6,15 @@ import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.net.Uri
 import androidx.exifinterface.media.ExifInterface
-import com.vibe.app.data.remote.VibeApi
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.MultipartBody
-import okhttp3.RequestBody.Companion.asRequestBody
-import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.File
 
-/** Persist selected photos before queuing; content URI permissions expire. */
+/** Persist selected photos before saving; photos remain on the device only. */
 class PhotoStore(context: Context) {
     private val resolver = context.applicationContext.contentResolver
     val directory = File(context.filesDir, "pending-photos").apply { mkdirs() }
-    suspend fun persist(source: String): String = withContext(Dispatchers.IO) {
-        if (!source.startsWith("content://")) return@withContext source
+
+    suspend fun persist(source: String): String {
+        if (!source.startsWith("content://")) return source
         val uri = Uri.parse(source)
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         resolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, bounds) }
@@ -44,19 +38,26 @@ class PhotoStore(context: Context) {
         file.outputStream().use { check(normalized.compress(Bitmap.CompressFormat.JPEG, 85, it)) }
         if (normalized !== bitmap) normalized.recycle()
         bitmap.recycle()
-        Uri.fromFile(file).toString()
+        return Uri.fromFile(file).toString()
     }
-    fun clear() { directory.listFiles()?.forEach { it.delete() } }
+
+    fun clear() {
+        directory.listFiles()?.forEach { it.delete() }
+    }
 }
 
-class MediaRepository(private val api: VibeApi, val photos: PhotoStore) {
-    suspend fun uploadAll(uris: List<String>, groupId: String?): List<String> = uris.map { upload(it, groupId) }
+/**
+ * MediaRepository manages local photo storage only.
+ *
+ * Photos are NOT uploaded to Firebase Storage (per the prototype constraint:
+ * the user cannot afford the Storage plan and wants to utilize Room). Photo
+ * URIs point to private app storage and are included in Memory records stored
+ * in Room and Firestore (metadata only, not the image bytes).
+ */
+class MediaRepository(context: Context) {
+    val photos = PhotoStore(context)
 
-    suspend fun upload(localUri: String, groupId: String?): String = withContext(Dispatchers.IO) {
-        if (localUri.startsWith("vibe-blob://")) return@withContext localUri
-        val file = File(Uri.parse(localUri).path ?: error("Invalid local photo"))
-        check(file.exists()) { "The original photo is no longer on this device." }
-        val part = MultipartBody.Part.createFormData("photo", file.name, file.asRequestBody("image/jpeg".toMediaType()))
-        api.uploadPhoto(part, groupId?.toRequestBody("text/plain".toMediaType())).uri
-    }
+    fun upload(localUri: String, groupId: String?): String = localUri
+
+    suspend fun uploadAll(uris: List<String>, groupId: String?): List<String> = uris
 }
